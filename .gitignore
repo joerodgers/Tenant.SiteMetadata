@@ -5,9 +5,9 @@
 *TempPoint*
 
 # Ignore staging info from Visual Studio
-library/Migration.Core/.vs/*
-library/Migration.Core/Migration.Core/bin/*
-library/Migration.Core/Migration.Core/obj/*
+library/Tenant.SiteMetadata/.vs/*
+library/Tenant.SiteMetadata/Tenant.SiteMetadata/bin/*
+library/Tenant.SiteMetadata/Tenant.SiteMetadata/obj/*
 
 # ignore the TestResults
 TestResults/*
