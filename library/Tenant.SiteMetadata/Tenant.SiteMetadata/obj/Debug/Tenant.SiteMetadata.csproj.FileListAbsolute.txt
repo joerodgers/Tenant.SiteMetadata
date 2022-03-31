@@ -1,0 +1,8 @@
+C:\_projects\Tenant.SiteMetadata\TenantSite.Metadata\bin\Tenant.SiteMetadata.dll
+C:\_projects\Tenant.SiteMetadata\TenantSite.Metadata\bin\Tenant.SiteMetadata.pdb
+C:\_projects\Tenant.SiteMetadata\library\Tenant.SiteMetadata\Tenant.SiteMetadata\obj\Debug\Tenant.SiteMetadata.csproj.CoreCompileInputs.cache
+C:\_projects\Tenant.SiteMetadata\library\Tenant.SiteMetadata\Tenant.SiteMetadata\obj\Debug\Tenant.SiteMetadata.dll
+C:\_projects\Tenant.SiteMetadata\library\Tenant.SiteMetadata\Tenant.SiteMetadata\obj\Debug\Tenant.SiteMetadata.pdb
+C:\_projects\Tenant.SiteMetadata\Tenant.SiteMetadata\bin\Tenant.SiteMetadata.dll
+C:\_projects\Tenant.SiteMetadata\Tenant.SiteMetadata\bin\Tenant.SiteMetadata.pdb
+C:\_projects\Tenant.SiteMetadata\library\Tenant.SiteMetadata\Tenant.SiteMetadata\obj\Debug\Tenant.SiteMetadata.csproj.AssemblyReference.cache
