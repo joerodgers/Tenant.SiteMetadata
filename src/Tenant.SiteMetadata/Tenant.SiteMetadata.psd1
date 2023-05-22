@@ -3,7 +3,7 @@
     RootModule = 'Tenant.SiteMetadata.psm1'
 
     # Version number of this module.
-    ModuleVersion = '0.0.0.7'
+    ModuleVersion = '0.0.0.8'
 
     # ID used to uniquely identify this module
     GUID = 'ca5d0749-f4ba-47ed-9f9b-c8be132207f5'
@@ -60,7 +60,7 @@
             'New-TenantConnectionInformation',
             'Update-DatabaseSchema',
             'Import-GraphDataConnectBlob',
-            'Get-ServerDatabaseConnectionInformation'
-            #'Start-LogFileLogger',
-            #'Stop-LogFileLogger'
+            'Get-ServerDatabaseConnectionInformation',
+            'Start-LogFileLogger',
+            'Stop-LogFileLogger'
     }
