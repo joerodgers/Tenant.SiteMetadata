@@ -1,0 +1,4 @@
+﻿IF (SCHEMA_ID('teams') IS NULL) 
+BEGIN
+    EXEC ('CREATE SCHEMA [teams]')
+END

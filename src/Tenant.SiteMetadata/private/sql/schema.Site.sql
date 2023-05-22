@@ -1,0 +1,4 @@
+﻿IF (SCHEMA_ID('site') IS NULL) 
+BEGIN
+    EXEC ('CREATE SCHEMA [site]')
+END
