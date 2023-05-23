@@ -64,8 +64,6 @@ begin
 	$downloadDirectoryPath = Join-Path -Path $env:TEMP              -ChildPath $moduleName
 	$downloadFilePath      = Join-Path -Path $downloadDirectoryPath -ChildPath "$moduleName-$fileName"
 
-	$moduleInstallationRelativePath = "WindowsPowerShell\Modules\$moduleName"
-
 	Remove-Module -Name $moduleName -Force -ErrorAction Ignore
 }
 process
@@ -101,11 +99,15 @@ process
 		{
 			"AllUsers"
 			{
-				$installationRootPath = $env:ProgramFiles 
+				$installationRootPath = $env:ProgramFiles
+
+                $moduleInstallationRelativePath = "WindowsPowerShell\Modules\$moduleName"
 			}
 			"CurrentUser"
 			{
 				$installationRootPath = Split-Path -Path $profile.CurrentUserAllHosts
+
+                $moduleInstallationRelativePath = "Modules\$moduleName"
 			}
 		}
 
