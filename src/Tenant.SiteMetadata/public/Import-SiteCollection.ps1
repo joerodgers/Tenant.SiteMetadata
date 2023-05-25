@@ -25,11 +25,15 @@ function Import-SiteCollection
             $activeSites          = Get-SharePointTenantActiveSite
             $aggregatedStoreSites = Get-SharePointTenantAggregatedStoreSite -IncludeDeletedSites -AggregatedStore "AggregatedStore"
 
+            Write-PSFMessage "Filtering sites list" -Level Verbose
+
             $deletedAggregatedStoreSites = [Linq.Enumerable]::ToList( $aggregatedStoreSites.Where({ $_.DeletedDate })      )
             $activeAggregatedStoreSites  = [Linq.Enumerable]::ToList( $aggregatedStoreSites.Where({ -not $_.DeletedDate }) )
             $noAccessLockedSites         = [Linq.Enumerable]::ToList( $activeSites.Where({ $_.LockState -eq "NoAccess" })  )
             
-        # merge basic site tenant data
+            Write-PSFMessage "Filtered sites list" -Level Verbose
+
+            # merge basic site tenant data
 
             # merge the two datasets
             Merge-AggregatedStoreSiteMetadata -TenantSitesList $activeSites -AggregatedStoreSitesList $activeAggregatedStoreSites

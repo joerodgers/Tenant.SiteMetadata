@@ -17,6 +17,8 @@
     }
     process
     {
+        Write-PSFMessage "Merging aggregated store site metadata" -Level Verbose
+
         foreach( $tenantSite in $TenantSitesList.GetEnumerator() )
         {
             $site = $AggregatedStoreSitesList.Where( { $_.SiteUrl -eq $tenantSite.SiteUrl } )
@@ -35,6 +37,8 @@
                 $tenantSite.Title              = $site.Title
             }
         }
+        
+        Write-PSFMessage "Merged aggregated store site metadata" -Level Verbose
     }
     end
     {

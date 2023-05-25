@@ -18,6 +18,8 @@
     }
     process
     {
+        Write-PSFMessage "Saving active $($SiteList.Count) sites" -Level Verbose
+
         # make sure all sites passed in 
         $sites = [Linq.Enumerable]::ToList($SiteList.Where( { $_.SiteId }))
 
