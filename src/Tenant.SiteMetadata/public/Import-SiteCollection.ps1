@@ -27,19 +27,19 @@ function Import-SiteCollection
 
             Write-PSFMessage "Filtering sites list" -Level Verbose
 
-            $deletedAggregatedStoreSites = [Linq.Enumerable]::ToList( $aggregatedStoreSites.Where({ $_.DeletedDate })      )
-            $activeAggregatedStoreSites  = [Linq.Enumerable]::ToList( $aggregatedStoreSites.Where({ -not $_.DeletedDate }) )
-            $noAccessLockedSites         = [Linq.Enumerable]::ToList( $activeSites.Where({ $_.LockState -eq "NoAccess" })  )
+            $deletedAggregatedStoreSites = [Linq.Enumerable]::ToList( $aggregatedStoreSites.Where({ $null -ne $_.DeletedDate }) ) # ~1s on a collection of 250k rows
+            $activeAggregatedStoreSites  = [Linq.Enumerable]::ToList( $aggregatedStoreSites.Where({ $null -eq $_.DeletedDate }) ) # ~1s on a collection of 250k rows
+            $noAccessLockedSites         = [Linq.Enumerable]::ToList( $activeSites.Where({ $_.LockState -eq "NoAccess" })       ) # ~1s on a collection of 250k rows
             
             Write-PSFMessage "Filtered sites list" -Level Verbose
 
-            # merge basic site tenant data
+        # merge basic site tenant data
 
-            # merge the two datasets
-            Merge-AggregatedStoreSiteMetadata -TenantSitesList $activeSites -AggregatedStoreSitesList $activeAggregatedStoreSites
+            # merge the two datasets into a single collection
+            $activeSites = Merge-AggregatedStoreSiteMetadata -TenantSitesList $activeSites -AggregatedStoreSitesList $activeAggregatedStoreSites
             
             # pull out all sites that have a SiteId
-            $sitesWithSiteId = [Linq.Enumerable]::ToList( $activeSites.Where( { $_.SiteId }) )
+            $sitesWithSiteId = [Linq.Enumerable]::ToList( $activeSites.Where( { $null -ne $_.SiteId }) )
 
             # merge active sites into database
             Write-PSFMessage "Merging active sites" -Level Verbose
