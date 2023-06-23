@@ -14,12 +14,13 @@
     
     begin
     {
-        $total = 0
     }
     process
     {
         while( $BatchExecutionJob.State -eq 'Running' -or -not $BatchResponse.IsEmpty )
         {
+            Write-PSFMessage -Message "Batch Job Information: Id=$($BatchExecutionJob.Id), State=$($BatchExecutionJob.State)" -Level Verbose
+
             if( $BatchResponse.IsEmpty )
             {
                 Write-PSFMessage -Message "Waiting for batch results" -Level Verbose

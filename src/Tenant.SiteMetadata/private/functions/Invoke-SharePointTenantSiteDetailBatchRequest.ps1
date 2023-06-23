@@ -3,7 +3,6 @@ function Invoke-SharePointTenantSiteDetailBatchRequest
 {
     begin
     {
-        Import-Module -Name "PnP.PowerShell" -ErrorAction Stop
 
         $batchRequest   = $PSItem
         $batchResponses = $using:batchResponses
@@ -19,6 +18,8 @@ function Invoke-SharePointTenantSiteDetailBatchRequest
 
             try
             {
+                Import-Module -Name "PnP.PowerShell" -RequiredVersion "1.12.0" -ErrorAction Stop
+
                 $connection = Connect-PnPOnline `
                                         -Url        $batchRequest.TenantAdminUrl `
                                         -ClientId   $batchRequest.TenantConnection.ClientId.ToString() `

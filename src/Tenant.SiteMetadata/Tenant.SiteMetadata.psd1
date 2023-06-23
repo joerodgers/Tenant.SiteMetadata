@@ -3,7 +3,7 @@
     RootModule = 'Tenant.SiteMetadata.psm1'
 
     # Version number of this module.
-    ModuleVersion = '0.0.0.10'
+    ModuleVersion = '0.0.0.11'
 
     # ID used to uniquely identify this module
     GUID = 'ca5d0749-f4ba-47ed-9f9b-c8be132207f5'
@@ -41,7 +41,7 @@
             "Microsoft.Graph.Users", 
             "Microsoft.Graph.Groups", 
             "PSFramework", 
-            "PnP.PowerShell" 
+            @{ModuleName="PnP.PowerShell"; RequiredVersion="1.12.0" } # Keep in sync with module reference in Invoke-SharePointTenantSiteDetailBatchRequest.ps1
         )
     
     # Functions to export from this module

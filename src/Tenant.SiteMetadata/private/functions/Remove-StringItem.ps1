@@ -10,6 +10,7 @@ function Remove-StringItem
         $ReferenceObject,
 
         [Parameter(Mandatory=$true)]
+        [AllowEmptyCollection()]
         [string[]]
         $DifferenceObject
     )

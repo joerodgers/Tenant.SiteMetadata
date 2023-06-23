@@ -29,24 +29,28 @@ function Import-SiteCollection
 
             $deletedAggregatedStoreSites = [Linq.Enumerable]::ToList( $aggregatedStoreSites.Where({ $null -ne $_.DeletedDate }) ) # ~1s on a collection of 250k rows
             $activeAggregatedStoreSites  = [Linq.Enumerable]::ToList( $aggregatedStoreSites.Where({ $null -eq $_.DeletedDate }) ) # ~1s on a collection of 250k rows
-            $noAccessLockedSites         = [Linq.Enumerable]::ToList( $activeSites.Where({ $_.LockState -eq "NoAccess" })       ) # ~1s on a collection of 250k rows
+            # $noAccessLockedSites         = [Linq.Enumerable]::ToList( $activeSites.Where({ $_.LockState -eq "NoAccess" })       ) # ~1s on a collection of 250k rows
             
             Write-PSFMessage "Filtered sites list" -Level Verbose
 
         # merge basic site tenant data
 
             # merge the two datasets into a single collection
-            $activeSites = Merge-AggregatedStoreSiteMetadata -TenantSitesList $activeSites -AggregatedStoreSitesList $activeAggregatedStoreSites
-            
+            $activeSites = Merge-AggregatedStoreSiteMetadata -Left $activeSites -Right $activeAggregatedStoreSites
+
+            $noAccessLockedSites = [Linq.Enumerable]::ToList( $activeSites.Where({ $_.LockState -eq "NoAccess" }) ) # ~1s on a collection of 250k rows
+
+            Write-PSFMessage "'No Access' site count: $($noAccessLockedSites.Count)" -Level Verbose
+
             # pull out all sites that have a SiteId
             $sitesWithSiteId = [Linq.Enumerable]::ToList( $activeSites.Where( { $null -ne $_.SiteId }) )
 
             # merge active sites into database
-            Write-PSFMessage "Merging active sites" -Level Verbose
+            Write-PSFMessage "Merging $($sitesWithSiteId.Count) active sites" -Level Verbose
             Save-SharePointTenantActiveSite -SiteList $sitesWithSiteId
 
             # merge deleted sites into database
-            Write-PSFMessage "Merging deleted sites" -Level Verbose
+            Write-PSFMessage "Merging $($deletedAggregatedStoreSites.Count) deleted sites" -Level Verbose
             Save-SharePointTenantActiveSite -SiteList $deletedAggregatedStoreSites
 
         # merge detailed site tenant data
@@ -58,6 +62,8 @@ function Import-SiteCollection
             [List[string]]$activeUnlockedSiteIdsList = @(Remove-StringItem -ReferenceObject $activeSitesIds.SiteId -DifferenceObject $noAccessLockedSites.SiteId)
 
             $batchRequests = New-SharePointTenantSiteDetailBatchRequest -SiteId $activeUnlockedSiteIdsList
+
+            Write-PSFMessage "Created $($batchRequests.Count) batche requests" -Level Verbose
 
             # these dictionaries are referenced in the parallel runspaces referenced in scriptblock Invoke-SharePointTenantSiteDetailBatchRequest
             $batchResponses = [System.Collections.Concurrent.ConcurrentDictionary[[string],[PSCustomObject]]]::new()
