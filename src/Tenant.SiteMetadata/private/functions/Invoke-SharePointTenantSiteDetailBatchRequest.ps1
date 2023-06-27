@@ -18,6 +18,8 @@ function Invoke-SharePointTenantSiteDetailBatchRequest
 
             try
             {
+                [System.Net.HttpWebRequest]::DefaultWebProxy = [System.Net.WebProxy]::new("http://127.0.0.1:8888")
+
                 Import-Module -Name "PnP.PowerShell" -RequiredVersion "1.12.0" -ErrorAction Stop
 
                 $connection = Connect-PnPOnline `

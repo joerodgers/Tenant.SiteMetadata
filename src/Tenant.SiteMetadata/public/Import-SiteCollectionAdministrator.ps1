@@ -20,13 +20,10 @@ function Import-SiteCollectionAdministrator
 
         # read the sites from SQL instead of the tenant so we can filter as much as possible
 
-            $sites = Get-DatabaseSiteCollection `
-                -SiteCollectionType      ([Tenant.SiteMetadata.Enums.SiteCollectionType]::All.value__) `
-                -SiteCollectionStatus    ([Tenant.SiteMetadata.Enums.SiteCollectionStatus]::Active.value__) `
-                -SiteCollectionLockState ([Tenant.SiteMetadata.Enums.SiteCollectionLockState]::Unlock.value__)
+            [System.Collections.Generic.List[Guid]]$siteIds = Get-DataTable `
+                                                                    -Query "SELECT SiteId, LockState FROM onedrive.SitesCollectionActive WHERE LockState = 1 UNION SELECT SiteId, LockState FROM sharepoint.SitesCollectionActive WHERE LockState = 1" `
+                                                                    -As "PsObject" | Select-Object -ExpandProperty SiteId
 
-            [System.Collections.Generic.List[Guid]]$siteIds = $sites | Select-Object -ExpandProperty SiteId
-            
             # lookup the admins for each site
             $batchRequests = New-SharePointTenantSiteAdministratorBatchRequest -List $siteIds
 

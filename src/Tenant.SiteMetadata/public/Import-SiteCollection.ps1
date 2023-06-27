@@ -29,9 +29,9 @@ function Import-SiteCollection
 
             $deletedAggregatedStoreSites = [Linq.Enumerable]::ToList( $aggregatedStoreSites.Where({ $null -ne $_.DeletedDate }) ) # ~1s on a collection of 250k rows
             $activeAggregatedStoreSites  = [Linq.Enumerable]::ToList( $aggregatedStoreSites.Where({ $null -eq $_.DeletedDate }) ) # ~1s on a collection of 250k rows
-            # $noAccessLockedSites         = [Linq.Enumerable]::ToList( $activeSites.Where({ $_.LockState -eq "NoAccess" })       ) # ~1s on a collection of 250k rows
             
-            Write-PSFMessage "Filtered sites list" -Level Verbose
+            Write-PSFMessage "Deleted Aggregated Store Site Count: $($deletedAggregatedStoreSites.Count)" -Level Verbose
+            Write-PSFMessage "Active Aggregated Store Site Count: $($activeAggregatedStoreSites.Count)" -Level Verbose
 
         # merge basic site tenant data
 

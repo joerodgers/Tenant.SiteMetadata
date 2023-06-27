@@ -43,6 +43,7 @@ function Get-SharePointTenantAggregatedStoreSite
                 "TimeCreated"        = "CreatedDate"
                 "TimeDeleted"        = "DeletedDate"
                 "Title"              = "Title"
+                "NumOfFiles"         = "TotalFileCount"
             }
 
             $parameters.List = "DO_NOT_DELETE_SPLIST_TENANTADMIN_AGGREGATED_SITECOLLECTIONS"
@@ -69,59 +70,45 @@ function Get-SharePointTenantAggregatedStoreSite
             $viewFields = ($propertyMap.Keys | ForEach-Object { "<FieldRef Name='$_'/>" }) -join [Environment]::NewLine
         }
 
+        $camlFilter = ""
+
         if( $PSBoundParameters.ContainsKey( "SiteUrl" )  )
         {
-            $caml = "<View>
-                        <Query>
-                            <Where>
-                                <Eq>
-                                    <FieldRef Name='SiteUrl'/>
-                                    <Value Type='Text'>$SiteUrl</Value>
-                                </Eq>
-                            </Where>
-                        </Query>
-                        <ViewFields>
-                            $viewFields
-                        </ViewFields>
-                        <RowLimit Paged='TRUE'>$PageSize</RowLimit>
-                    </View>"
-
-                $parameters.Query = $caml
+            $camlFilter = "<And>
+                               <IsNotNull><FieldRef Name='SiteId'/></IsNotNull>
+                               <Eq><FieldRef Name='SiteUrl'/><Value Type='Text'>$SiteUrl</Value></Eq>
+                           </And>"
         }
         else
         {
             if( $IncludeDeletedSites.IsPresent )
             {
-                $caml = "<View>
-                            <Query>
-                            </Query>
-                            <ViewFields>
-                                $viewFields
-                            </ViewFields>
-                            <RowLimit Paged='TRUE'>$PageSize</RowLimit>
-                        </View>"
-                
-                $parameters.Query = $caml
+                $camlFilter = "<And>
+                                <IsNotNull><FieldRef Name='SiteId'/></IsNotNull>
+                                <IsNotNull><FieldRef Name='SiteUrl'/></IsNotNull>
+                               </And>"
             }
             else
             {
-                $caml = "<View>
-                            <Query>
-                                <Where>
-                                    <IsNull>
-                                        <FieldRef Name='TimeDeleted'/>
-                                    </IsNull>
-                                </Where>
-                            </Query>
-                            <ViewFields>
-                                $viewFields
-                            </ViewFields>
-                            <RowLimit Paged='TRUE'>$PageSize</RowLimit>
-                        </View>"
-    
-                $parameters.Query = $caml
+                $camlFilter = "<And>
+                                   <IsNull><FieldRef Name='TimeDeleted'/></IsNull>
+                                   <And>
+                                       <IsNotNull><FieldRef Name='SiteId'/></IsNotNull>
+                                       <IsNotNull><FieldRef Name='SiteUrl'/></IsNotNull>
+                                   </And>
+                               </And>"
             }
         }
+
+        $parameters.Query = "<View>
+                                <Query>
+                                    <Where>$camlFilter</Where>
+                                </Query>
+                                <ViewFields>
+                                    $viewFields
+                                </ViewFields>
+                                <RowLimit Paged='TRUE'>$PageSize</RowLimit>
+                            </View>"
 
         # auto generate the select-object properties by building a dynamic mapping using the $propertyMap hashtable
         $properties = @( $propertyMap.Keys | ForEach-Object { @{ Name=$propertyMap[$_]; Expression=[ScriptBlock]::Create( "`$_.FieldValues.'$($_)'.ToString()" )} } )
@@ -129,7 +116,7 @@ function Get-SharePointTenantAggregatedStoreSite
     }
     process
     {
-        Write-PSFMessage -Message "Reading items from $($parameters.List) list" -Level Verbose
+        Write-PSFMessage -Message "Reading items from $($parameters.List) list with query: $($parameters.Query)" -Level Verbose
 
         $items = Get-PnPListItem  @parameters | Select-Object $properties
 
