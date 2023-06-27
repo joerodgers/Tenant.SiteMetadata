@@ -23,7 +23,7 @@ function Import-SiteCollection
         # pull tenant data once
 
             $activeSites          = Get-SharePointTenantActiveSite
-            $aggregatedStoreSites = Get-SharePointTenantAggregatedStoreSite -IncludeDeletedSites -AggregatedStore "AggregatedStore"
+            $aggregatedStoreSites = Get-SharePointTenantAggregatedStoreSite -IncludeDeletedSites
 
             Write-PSFMessage "Filtering sites list" -Level Verbose
 
