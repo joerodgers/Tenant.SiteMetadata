@@ -23,7 +23,7 @@
         {
             Write-PSFMessage -Message "Executing site batch: $url" -Level Verbose
 
-            $response = Invoke-PnPSPRestMethod -Url $url
+            $response = Invoke-PnPSPRestMethod -Url $url -ErrorAction Stop
             
             $response.value | Select-Object @{ Name="SiteId"; Expression={ $_.Id.Split(",")[1] }}
 
@@ -34,7 +34,7 @@
 
         foreach( $template in $templates )
         {
-            Get-SharePointTenantSiteSiteIdByTemplate -Template $template
+            Get-SharePointTenantSiteSiteIdByTemplate -Template $template -ErrorAction Stop
         }
     }
     end

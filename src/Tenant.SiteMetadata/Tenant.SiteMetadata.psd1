@@ -3,7 +3,7 @@
     RootModule = 'Tenant.SiteMetadata.psm1'
 
     # Version number of this module.
-    ModuleVersion = '0.0.0.13'
+    ModuleVersion = '0.0.0.14'
 
     # ID used to uniquely identify this module
     GUID = 'ca5d0749-f4ba-47ed-9f9b-c8be132207f5'

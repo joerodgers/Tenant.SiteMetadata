@@ -19,8 +19,8 @@
         try 
         {
             Write-PSFMessage -Message "Executing: Get-PnPTenantSite -Template $Template"
-
-            $tenantsites = Get-PnPTenantSite -Template $Template -Detailed -IncludeOneDriveSites -ErrorAction Stop
+            
+            $tenantsites = Get-PnPTenantSite -Template $Template -Filter "LockState -ne 'NoAccess'" -IncludeOneDriveSites -ErrorAction Stop
 
             Write-PSFMessage -Message "Executed: Get-PnPTenantSite -Template $Template, Result Count: $($tenantsites.Count)"
 
