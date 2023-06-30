@@ -3,7 +3,7 @@
     RootModule = 'Tenant.SiteMetadata.psm1'
 
     # Version number of this module.
-    ModuleVersion = '0.0.0.17'
+    ModuleVersion = '0.0.0.18'
 
     # ID used to uniquely identify this module
     GUID = 'ca5d0749-f4ba-47ed-9f9b-c8be132207f5'
@@ -34,7 +34,7 @@
         'bin\Microsoft.Extensions.Caching.Abstractions.dll'
         'bin\Microsoft.Extensions.Primitives.dll'                       # included with pnp.powershell v1
         'bin\Microsoft.AspNetCore.DataProtection.Abstractions.dll'
-        )
+    )
 
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules = @( 

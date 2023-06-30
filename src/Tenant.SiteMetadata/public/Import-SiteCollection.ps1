@@ -50,8 +50,10 @@ function Import-SiteCollection
 
         Write-PSFMessage "Removed $( $tenantSiteModelList.Count - $unlockedTenantSiteModelList.Count) 'NoAccess' locked sites from site detail lookup." -Level Verbose
 
+        $siteIds = $unlockedTenantSiteModelList.SiteId -as [System.Collections.Generic.List[Guid]]
+
         # generate batch requests for each unlocked site so we can pull detailed site information
-        $batchRequests = New-SharePointTenantSiteDetailBatchRequest -SiteId $unlockedTenantSiteModelList.SiteId -BatchSize 100
+        $batchRequests = New-SharePointTenantSiteDetailBatchRequest -SiteId $siteIds -BatchSize 100
      
         # these concurrent dictionaries are written to in the parallel runspaces referenced in Invoke-SharePointTenantSiteDetailBatchRequest
         $batchResponses = [System.Collections.Concurrent.ConcurrentDictionary[[string],[PSCustomObject]]]::new()
