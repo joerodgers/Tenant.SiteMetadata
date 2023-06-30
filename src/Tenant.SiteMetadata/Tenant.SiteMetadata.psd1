@@ -3,7 +3,7 @@
     RootModule = 'Tenant.SiteMetadata.psm1'
 
     # Version number of this module.
-    ModuleVersion = '0.0.0.15'
+    ModuleVersion = '0.0.0.16'
 
     # ID used to uniquely identify this module
     GUID = 'ca5d0749-f4ba-47ed-9f9b-c8be132207f5'
@@ -19,12 +19,21 @@
 
     # Assemblies that must be loaded prior to importing this module
     RequiredAssemblies = @( 
-            'bin\Tenant.SiteMetadata.dll'
-            'bin\Microsoft.Identity.Web.Diagnostics.dll'
-            'bin\Microsoft.IdentityModel.Abstractions.dll'             # included with pnp.powershell v2
-            'bin\Microsoft.Extensions.Caching.Memory.dll'
-            'bin\Microsoft.Extensions.Caching.Abstractions.dll'
-            'bin\Microsoft.AspNetCore.DataProtection.Abstractions.dll'
+        'bin\Tenant.SiteMetadata.dll'
+        'bin\Microsoft.Identity.Client.dll'                             # included with pnp.powershell v1 and v2
+        'bin\Microsoft.Identity.Web.Diagnostics.dll'
+        'bin\Microsoft.Identity.Web.TokenCache.dll'
+        'bin\Microsoft.IdentityModel.Abstractions.dll'                  # included with pnp.powershell v2
+        'bin\Microsoft.Extensions.Logging.dll'                          # included with pnp.powershell v1 and v2
+        'bin\Microsoft.Extensions.Logging.Abstractions.dll'             # included with pnp.powershell v1 and v2
+        'bin\Microsoft.Extensions.DependencyInjection.dll'              # included with pnp.powershell v1 and v2
+        'bin\Microsoft.Extensions.DependencyInjection.Abstractions.dll' # included with pnp.powershell v1 and v2
+        'bin\Microsoft.Extensions.Options.dll'                          # included with pnp.powershell v1 and v2
+        'bin\Microsoft.IdentityModel.Abstractions.dll'             # included with pnp.powershell v2
+        'bin\Microsoft.Extensions.Caching.Memory.dll'
+        'bin\Microsoft.Extensions.Caching.Abstractions.dll'
+        'bin\Microsoft.Extensions.Primitives.dll'                       # included with pnp.powershell v1
+        'bin\Microsoft.AspNetCore.DataProtection.Abstractions.dll'
         )
 
     # Modules that must be imported into the global environment prior to importing this module
