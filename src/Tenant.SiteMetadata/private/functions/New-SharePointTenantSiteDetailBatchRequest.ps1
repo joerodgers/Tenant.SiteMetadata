@@ -20,7 +20,8 @@
         $connectionInformation = Get-SharePointTenantConnectionInformation
         $tenantAdminUrl        = Get-SharePointTenantAdminUrl
 
-        $models = New-Object System.Collections.Generic.List[SiteDetailBatchRequestModel]
+        #$models = New-Object System.Collections.Generic.List[SiteDetailBatchRequestModel]
+        $models = New-Object System.Collections.Generic.List[PSCustomObject]
     }
     process
     {
@@ -42,12 +43,23 @@
                 # create a formatted HTTP batch body
                 $batchBody = New-SharePointTenantSiteDetailBatchRequestBody -Url $restEndpoints -BatchId $batchId
 
+                <#
                 $model = [SiteDetailBatchRequestModel]::new()
                 $model.BatchId          = $batchId
                 $model.BatchBody        = $batchBody
                 $model.SiteIdList       = $batch
                 $model.TenantAdminUrl   = $tenantAdminUrl        # used to connect in runspace
                 $model.TenantConnection = $connectionInformation # used to connect in runspace
+
+                $models.Add($model)
+                #>
+
+                $model = [PSCustomObject] @{
+                    BatchId          = $batchId
+                    BatchBody        = $batchBody
+                    TenantAdminUrl   = $tenantAdminUrl        # used to connect in runspace
+                    TenantConnection = $connectionInformation # used to connect in runspace
+                }
 
                 $models.Add($model)
             }

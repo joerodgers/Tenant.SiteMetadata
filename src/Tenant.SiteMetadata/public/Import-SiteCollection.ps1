@@ -50,6 +50,7 @@ function Import-SiteCollection
 
         Write-PSFMessage "Removed $( $tenantSiteModelList.Count - $unlockedTenantSiteModelList.Count) 'NoAccess' locked sites from site detail lookup." -Level Verbose
 
+        # saw a cast failure on a cx environment, explict casting to fix
         $siteIds = $unlockedTenantSiteModelList.SiteId -as [System.Collections.Generic.List[Guid]]
 
         # generate batch requests for each unlocked site so we can pull detailed site information
