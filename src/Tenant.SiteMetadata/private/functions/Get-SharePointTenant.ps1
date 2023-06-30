@@ -10,8 +10,6 @@
     }
     process
     {
-        Assert-SharePointConnection -Cmdlet $PSCmdlet
-
         $context = Get-PnPContext
 
         return New-Object Microsoft.Online.SharePoint.TenantAdministration.Tenant($context)

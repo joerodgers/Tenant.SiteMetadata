@@ -15,36 +15,35 @@ function New-SharePointTenantSiteAdministratorBatchRequest
     {
         $connectionInformation = Get-SharePointTenantConnectionInformation
         $tenantAdminUrl        = Get-SharePointTenantAdminUrl
-        $batches               = New-Object System.Collections.Generic.List[PSCustomObject]
+        $models                = New-Object System.Collections.Generic.List[PSCustomObject]
         $orderedDictionary     = New-Object System.Collections.Specialized.OrderedDictionary
     }
     process
     {
         # split the endpoints in the chunks of 100 requests
-        $chunks = [System.Linq.Enumerable]::ToList([System.Linq.Enumerable]::Chunk( $List, 10 <# spo has a max batch size of 100 #> ))
+        $batches = [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Chunk( $List, 10 <# spo has a max batch size of 100 #> ))
         
         Write-PSFMessage -Message "Created $($chunks.Count) chunks" -Level Debug
 
         $number = 0
 
         # process each chunk of 100 requests
-        foreach( $chunk in $chunks )
+        foreach( $batch in $batches )
         {
             $orderedDictionary = New-Object System.Collections.Specialized.OrderedDictionary
 
             $batchId = (New-Guid).ToString()
 
-            Write-PSFMessage -Message "BatchId: $batchId, chunk $number, has $($chunk.Count) items" -Level Debug
+            Write-PSFMessage -Message "BatchId: $batchId, batch $number, has $($batch.Count) items" -Level Debug
 
-            $list = [System.Linq.Enumerable]::ToList( $chunk )
+            $list = [System.Linq.Enumerable]::ToList( $batch )
 
             $list | ForEach-Object { $orderedDictionary.Add( $_.ToString(), $_.ToString() ) }
-
-            Write-PSFMessage -Message "BatchId: $batchId, chunk $number, has $($orderedDictionary.Count) items" -Level Debug
 
             # build a HTTP request body for each REST endpoint in the current chunk
             $batchBody = New-SharePointTenantSiteAdministratorBatchRequestBody -Dictionary $orderedDictionary -BatchId $batchId
 
+            # TODO: convert to concrete class
             $batch = [PSCustomObject] @{
                 BatchId          = $batchId
                 BatchBody        = $batchBody
@@ -54,14 +53,13 @@ function New-SharePointTenantSiteAdministratorBatchRequest
             }
 
             # add to the collection of batches to execute
-            $batches.Add($batch)
+            $models.Add($batch)
         
             $number++
         }
-
-        return ,$batches
     }
     end
     {
+        return ,$models
     }        
 }

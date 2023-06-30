@@ -1,0 +1,172 @@
+﻿Property Names and Property Types returned by "/_api/Microsoft.Online.SharePoint.TenantAdministration.Tenant/sites('<SITEID>')"
+
+    Name                                        TypeNameOfValue                                                                                                                
+    ----                                        ---------------                                                                                                                
+    AllowDownloadingNonWebViewableFiles         System.Boolean                                                                                                                 
+    AllowEditing                                System.Boolean                                                                                                                 
+    AllowSelfServiceUpgrade                     System.Boolean                                                                                                                 
+    AnonymousLinkExpirationInDays               System.Int64                                                                                                                   
+    AuthContextStrength                         System.Object                                                                                                                  
+    AuthenticationContextLimitedAccess          System.Boolean                                                                                                                 
+    AuthenticationContextName                   System.Object                                                                                                                  
+    AverageResourceUsage                        System.Double                                                                                                                  
+    BlockDownloadLinksFileType                  System.Int64                                                                                                                   
+    BlockDownloadMicrosoft365GroupIds           System.Object                                                                                                                  
+    BlockDownloadPolicy                         System.Boolean                                                                                                                 
+    BlockGuestsAsSiteAdmin                      System.Int64                                                                                                                   
+    ClearRestrictedAccessControl                System.Boolean                                                                                                                 
+    CommentsOnSitePagesDisabled                 System.Boolean                                                                                                                 
+    CompatibilityLevel                          System.Int64                                                                                                                   
+    ConditionalAccessPolicy                     System.Int64                                                                                                                   
+    CurrentResourceUsage                        System.Double                                                                                                                  
+    DefaultLinkPermission                       System.Int64                                                                                                                   
+    DefaultLinkToExistingAccess                 System.Boolean                                                                                                                 
+    DefaultLinkToExistingAccessReset            System.Boolean                                                                                                                 
+    DefaultShareLinkRole                        System.Int64                                                                                                                   
+    DefaultShareLinkScope                       System.Int64                                                                                                                   
+    DefaultSharingLinkType                      System.Int64                                                                                                                   
+    DenyAddAndCustomizePages                    System.Int64                                                                                                                   
+    Description                                 System.String                                                                                                                  
+    DisableAppViews                             System.Int64                                                                                                                   
+    DisableCompanyWideSharingLinks              System.Int64                                                                                                                   
+    DisableFlows                                System.Int64                                                                                                                   
+    ExcludeBlockDownloadPolicySiteOwners        System.Boolean                                                                                                                 
+    ExcludeBlockDownloadSharePointGroups        System.Object                                                                                                                  
+    ExcludedBlockDownloadGroupIds               System.Collections.Generic.List`1[[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]
+    ExternalUserExpirationInDays                System.Int64                                                                                                                   
+    GroupId                                     System.String                                                                                                                  
+    GroupOwnerLoginName                         System.String                                                                                                                  
+    HasHolds                                    System.Boolean                                                                                                                 
+    HubSiteId                                   System.String                                                                                                                  
+    IBMode                                      System.String                                                                                                                  
+    IBSegments                                  System.Collections.Generic.List`1[[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]
+    IBSegmentsToAdd                             System.Object                                                                                                                  
+    IBSegmentsToRemove                          System.Object                                                                                                                  
+    IsGroupOwnerSiteAdmin                       System.Boolean                                                                                                                 
+    IsHubSite                                   System.Boolean                                                                                                                 
+    IsTeamsChannelConnected                     System.Boolean                                                                                                                 
+    IsTeamsConnected                            System.Boolean                                                                                                                 
+    LastContentModifiedDate                     System.String                                                                                                                  
+    Lcid                                        System.String                                                                                                                  
+    LimitedAccessFileType                       System.Int64                                                                                                                   
+    ListsShowHeaderAndNavigation                System.Boolean                                                                                                                 
+    LockIssue                                   System.Object                                                                                                                  
+    LockState                                   System.String                                                                                                                  
+    LoopDefaultSharingLinkRole                  System.Int64                                                                                                                   
+    LoopDefaultSharingLinkScope                 System.Int64                                                                                                                   
+    LoopOverrideSharingCapability               System.Boolean                                                                                                                 
+    LoopSharingCapability                       System.Int64                                                                                                                   
+    MediaTranscription                          System.Int64                                                                                                                   
+    OverrideBlockUserInfoVisibility             System.Int64                                                                                                                   
+    OverrideSharingCapability                   System.Boolean                                                                                                                 
+    OverrideTenantAnonymousLinkExpirationPolicy System.Boolean                                                                                                                 
+    OverrideTenantExternalUserExpirationPolicy  System.Boolean                                                                                                                 
+    Owner                                       System.String                                                                                                                  
+    OwnerEmail                                  System.String                                                                                                                  
+    OwnerLoginName                              System.String                                                                                                                  
+    OwnerName                                   System.String                                                                                                                  
+    PWAEnabled                                  System.Int64                                                                                                                   
+    ReadOnlyAccessPolicy                        System.Boolean                                                                                                                 
+    ReadOnlyForBlockDownloadPolicy              System.Boolean                                                                                                                 
+    ReadOnlyForUnmanagedDevices                 System.Boolean                                                                                                                 
+    RelatedGroupId                              System.String                                                                                                                  
+    RequestFilesLinkEnabled                     System.Boolean                                                                                                                 
+    RequestFilesLinkExpirationInDays            System.Int64                                                                                                                   
+    RestrictedAccessControl                     System.Boolean                                                                                                                 
+    RestrictedAccessControlGroups               System.Collections.Generic.List`1[[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]
+    RestrictedAccessControlGroupsToAdd          System.Object                                                                                                                  
+    RestrictedAccessControlGroupsToRemove       System.Object                                                                                                                  
+    RestrictedToRegion                          System.Int64                                                                                                                   
+    SandboxedCodeActivationCapability           System.Int64                                                                                                                   
+    SensitivityLabel                            System.String                                                                                                                  
+    SensitivityLabel2                           System.String                                                                                                                  
+    SetOwnerWithoutUpdatingSecondaryAdmin       System.Boolean                                                                                                                 
+    SharingAllowedDomainList                    System.String                                                                                                                  
+    SharingBlockedDomainList                    System.String                                                                                                                  
+    SharingCapability                           System.Int64                                                                                                                   
+    SharingDomainRestrictionMode                System.Int64                                                                                                                   
+    SharingLockDownCanBeCleared                 System.Boolean                                                                                                                 
+    SharingLockDownEnabled                      System.Boolean                                                                                                                 
+    ShowPeoplePickerSuggestionsForGuestUsers    System.Boolean                                                                                                                 
+    SiteDefinedSharingCapability                System.Int64                                                                                                                   
+    SocialBarOnSitePagesDisabled                System.Boolean                                                                                                                 
+    Status                                      System.Object                                                                                                                  
+    StorageMaximumLevel                         System.String                                                                                                                  
+    StorageQuotaType                            System.Object                                                                                                                  
+    StorageUsage                                System.String                                                                                                                  
+    StorageWarningLevel                         System.String                                                                                                                  
+    TeamsChannelType                            System.Int64                                                                                                                   
+    Template                                    System.String                                                                                                                  
+    TimeZoneId                                  System.Int64                                                                                                                   
+    Title                                       System.String                                                                                                                  
+    TitleTranslations                           System.Object                                                                                                                  
+    Url                                         System.String                                                                                                                  
+    UserCodeMaximumLevel                        System.Double                                                                                                                  
+    UserCodeWarningLevel                        System.Double                                                                                                                  
+    WebsCount                                   System.Int64                                                                                                                   
+
+
+Fields returned from DO_NOT_DELETE_SPLIST_TENANTADMIN_AGGREGATED_SITECOLLECTIONS list
+
+    AllowGuestUserSignIn
+    ArchiveStatus
+    ChannelSitesCount
+    ChannelType
+    ComplianceAssetId
+    ConditionalAccessPolicy
+    ContentTypeId
+    ContentVersion
+    Created
+    Created_x0020_Date
+    CreatedBy
+    CreatedByEmail
+    DeletedBy
+    Editor
+    ExternalSharing
+    FileViewedOrEdited
+    GroupId
+    GUID
+    HubSiteId
+    IBMode
+    IBSegmentsGuids
+    Initiator
+    LastActivityOn
+    NumOfFiles
+    PagesVisited
+    PageViews
+    RelatedGroupId
+    ScopeId
+    SensitivityLabel
+    SiteCreationSource
+    SiteFlags
+    SiteId
+    SiteOwnerEmail
+    SiteOwnerName
+    SiteUrl
+    State
+    StorageQuota
+    StorageUsed
+    StorageUsedPercentage
+    TemplateName
+    TimeCreated
+    TimeDeleted
+    Title
+
+
+Property Names and Property Types returned by '/_api/v2.1/sites/getallsites?$top=1000'
+
+    Name             TypeNameOfValue                            
+    ----             ---------------                            
+    createdDateTime  System.String                              
+    dataLocationCode System.String                              
+    id               System.String                              
+    name             System.String                              
+    owner            System.Management.Automation.PSCustomObject
+    root             System.Management.Automation.PSCustomObject
+    sensitivityLabel System.Management.Automation.PSCustomObject
+    siteCollection   System.Management.Automation.PSCustomObject
+    template         System.Management.Automation.PSCustomObject
+    title            System.String                              
+    webUrl           System.String                              
+
+

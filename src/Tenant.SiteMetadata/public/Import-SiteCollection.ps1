@@ -15,72 +15,60 @@ function Import-SiteCollection
     begin
     {
         $cmdletExecutionId = Start-CmdletExecution -Cmdlet $PSCmdlet -ClearErrors
+        $deletedPredicate  = { param ($model) return $null -ne $model.DeletedDate    } -as [System.Func[TenantSiteModel, bool]]
+        $noAccessPredicate = { param ($model) return $model.LockState -ne 'NoAccess' } -as [System.Func[TenantSiteModel, bool]]
     }
     process
     {
         Assert-SharePointConnection -Cmdlet $PSCmdlet
 
-        # pull tenant data once
+        # pull tenant data (the slow part)
 
-            $activeSites          = Get-SharePointTenantActiveSite
-            $aggregatedStoreSites = Get-SharePointTenantAggregatedStoreSite -IncludeDeletedSites
+        $tenantSiteModelList          = Get-SharePointTenantSiteModelList -ErrorAction Stop
+        $restApiTenantSiteModelList   = Get-SharePointTenantSiteModelList -UseRestApi -ErrorAction Stop
+        $aggregatedStoreSiteModelList = Get-SharePointAggregatedStoreTenantSiteModelList -ErrorAction Stop
 
-            Write-PSFMessage "Filtering sites list" -Level Verbose
+        # merge the two model collections into a single collection
+        $tenantSiteModelList = Join-TenantSiteModelList -OuterList $tenantSiteModelList -InnerList $restApiTenantSiteModelList -ErrorAction Stop
 
-            $deletedAggregatedStoreSites = [Linq.Enumerable]::ToList( $aggregatedStoreSites.Where({ $null -ne $_.DeletedDate }) ) # ~1s on a collection of 250k rows
-            $activeAggregatedStoreSites  = [Linq.Enumerable]::ToList( $aggregatedStoreSites.Where({ $null -eq $_.DeletedDate }) ) # ~1s on a collection of 250k rows
-            
-            Write-PSFMessage "Deleted Aggregated Store Site Count: $($deletedAggregatedStoreSites.Count)" -Level Verbose
-            Write-PSFMessage "Active Aggregated Store Site Count: $($activeAggregatedStoreSites.Count)" -Level Verbose
+        # merge the two model collections into a single collection
+        $tenantSiteModelList = Join-TenantSiteModelList -OuterList $tenantSiteModelList -InnerList $aggregatedStoreSiteModelList -ErrorAction Stop
 
-        # merge basic site tenant data
+        # backfill as many SiteIds as possible, the bulk of these should be RedirectSite#0 templates
+        $tenantSiteModelList = Add-MissingTenantSiteModelSiteId -TenantSiteModelList $tenantSiteModelList -ErrorAction Stop
 
-            # merge the two datasets into a single collection
-            $activeSites = Merge-AggregatedStoreSiteMetadata -Left $activeSites -Right $activeAggregatedStoreSites
+        # save active sites into database
+        Save-TenantSiteModel -TenantSiteModelList $tenantSiteModelList -ErrorAction Stop
 
-            $noAccessLockedSites = [Linq.Enumerable]::ToList( $activeSites.Where({ $_.LockState -eq "NoAccess" }) ) # ~1s on a collection of 250k rows
+        $deletedAggregatedStoreSiteModelList = [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Where( $aggregatedStoreSiteModelList, $deletedPredicate ))
 
-            Write-PSFMessage "'No Access' site count: $($noAccessLockedSites.Count)" -Level Verbose
+        # save deleted sites into database
+        Save-TenantSiteModel -TenantSiteModelList $deletedAggregatedStoreSiteModelList -ErrorAction Stop
 
-            # pull out all sites that have a SiteId
-            $sitesWithSiteId = [Linq.Enumerable]::ToList( $activeSites.Where( { $null -ne $_.SiteId }) )
+        # remove all sites set to NoAccess
+        $unlockedTenantSiteModelList = [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Where( $tenantSiteModelList, $noAccessPredicate ))
 
-            # merge active sites into database
-            Write-PSFMessage "Merging $($sitesWithSiteId.Count) active sites" -Level Verbose
-            Save-SharePointTenantActiveSite -SiteList $sitesWithSiteId
+        Write-PSFMessage "Removed $( $tenantSiteModelList.Count - $unlockedTenantSiteModelList.Count) 'NoAccess' locked sites from site detail lookup." -Level Verbose
 
-            # merge deleted sites into database
-            Write-PSFMessage "Merging $($deletedAggregatedStoreSites.Count) deleted sites" -Level Verbose
-            Save-SharePointTenantActiveSite -SiteList $deletedAggregatedStoreSites
+        # generate batch requests for each unlocked site so we can pull detailed site information
+        $batchRequests = New-SharePointTenantSiteDetailBatchRequest -SiteId $unlockedTenantSiteModelList.SiteId -BatchSize 100
+     
+        # these concurrent dictionaries are written to in the parallel runspaces referenced in Invoke-SharePointTenantSiteDetailBatchRequest
+        $batchResponses = [System.Collections.Concurrent.ConcurrentDictionary[[string],[PSCustomObject]]]::new()
+        $batchErrors    = [System.Collections.Concurrent.ConcurrentDictionary[[string],[string]]]::new()
 
-        # merge detailed site tenant data
+        # start a backgroup job to process each batch in parallel
+        $batchExecutionJob = $batchRequests | ForEach-Object -ThrottleLimit $ThrottleLimit -Parallel ${function:Invoke-SharePointTenantSiteDetailBatchRequest} -AsJob
 
-            # get a list of SiteIds for all active sites in SPO and OD4B
-            $activeSitesIds = Get-SharePointTenantSharePointId
+        # save the batch results as they are completed in the runspaces
+        Save-SharePointTenantSiteDetailBatchResult -BatchResponse $batchResponses -BatchExecutionJob $batchExecutionJob
 
-            # remove all SiteIds that are in the NoAccess list
-            [List[string]]$activeUnlockedSiteIdsList = @(Remove-StringItem -ReferenceObject $activeSitesIds.SiteId -DifferenceObject $noAccessLockedSites.SiteId)
-
-            $batchRequests = New-SharePointTenantSiteDetailBatchRequest -SiteId $activeUnlockedSiteIdsList
-
-            Write-PSFMessage "Created $($batchRequests.Count) batche requests" -Level Verbose
-
-            # these dictionaries are referenced in the parallel runspaces referenced in scriptblock Invoke-SharePointTenantSiteDetailBatchRequest
-            $batchResponses = [System.Collections.Concurrent.ConcurrentDictionary[[string],[PSCustomObject]]]::new()
-            $batchErrors    = [System.Collections.Concurrent.ConcurrentDictionary[[string],[string]]]::new()
-
-            # start a backgroup job to process each batch in parallel
-            $batchExecutionJob = $batchRequests | ForEach-Object -ThrottleLimit $ThrottleLimit -Parallel ${function:Invoke-SharePointTenantSiteDetailBatchRequest} -AsJob
-
-            # save the batch results as they are returned
-            Save-SharePointTenantSiteDetailBatchResult -BatchResponse $batchResponses -BatchExecutionJob $batchExecutionJob
-
-            # log any batch execution errors
-             foreach( $batchError in $batchErrors.GetEnumerator() )
-            {
-                Write-PSFMessage "Batch execution error, BatchId: $($batchError.Key), Error: $($batchError.Value)" -Level Error
-            }
+        # log any batch execution errors
+        foreach( $batchError in $batchErrors.GetEnumerator() )
+        {
+            Write-PSFMessage "Batch execution error, BatchId: $($batchError.Key), Error: $($batchError.Value)" -Level Error
         }
+    }
     end
     {
         Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $Error.Count

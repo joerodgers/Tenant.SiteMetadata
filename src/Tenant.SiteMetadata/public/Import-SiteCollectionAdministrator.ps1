@@ -24,6 +24,12 @@ function Import-SiteCollectionAdministrator
                                                                     -Query "SELECT SiteId, LockState FROM onedrive.SitesCollectionActive WHERE LockState = 1 UNION SELECT SiteId, LockState FROM sharepoint.SitesCollectionActive WHERE LockState = 1" `
                                                                     -As "PsObject" | Select-Object -ExpandProperty SiteId
 
+            if( $siteIds.Count -eq 0 )
+            {
+                Write-PSFMessage "No unlocked SharePoint or OneDrives sites found in the database." -Level Warning
+                return
+            }
+            
             # lookup the admins for each site
             $batchRequests = New-SharePointTenantSiteAdministratorBatchRequest -List $siteIds
 

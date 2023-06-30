@@ -4,51 +4,66 @@
     param
     (
         [Parameter(Mandatory=$true)]
-        [System.Collections.Generic.List[string]]
-        $SiteId
+        [System.Collections.Generic.List[Guid]]
+        $SiteId,
+
+        [Parameter(Mandatory=$false)]
+        [ValidateRange(1,100)]
+        [int]
+        $BatchSize = 100
     )
     
     begin
     {
+        Write-PSFMessage "Starting" -Level Verbose
+
         $connectionInformation = Get-SharePointTenantConnectionInformation
         $tenantAdminUrl        = Get-SharePointTenantAdminUrl
-        $batches               = New-Object System.Collections.Generic.List[PSCustomObject]
+
+        $models = New-Object System.Collections.Generic.List[SiteDetailBatchRequestModel]
     }
     process
     {
-        while( $startIndex -lt $SiteId.Count )
+        Write-PSFMessage "Creating batch requests for $($SiteId.Count) sites." -Level Verbose
+
+        # break the collection into chunks of 100 sites (max supported)
+        $batches =  [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Chunk( $SiteId, $BatchSize ) )
+
+        # process each batch
+        foreach( $batch in $batches )
         {
-            $batchId = (New-Guid).ToString()
+            try
+            {
+                # build a list of urls to pull site details
+                $restEndpoints = foreach ( $guid in $batch ) { "/_api/Microsoft.Online.SharePoint.TenantAdministration.Tenant/sites('{0}')" -f $guid }
 
-            # determine how many items to pull
-            $chunkSize = [Math]::Min( 100 <# max allowed by SPO #>, $SiteId.Count - $startIndex )
+                $batchId = New-Guid
 
-            # pull chunk out of collection
-            $ids = $SiteId.GetRange( $startIndex, $chunkSize ).ToArray()
-    
-            # build a list of urls to pull site details
-            $urls = foreach ( $id in $ids ) { "/_api/Microsoft.Online.SharePoint.TenantAdministration.Tenant/sites('{0}')" -f $id }
-    
-            # create a formatted HTTP batch body
-            $batchBody = New-SharePointTenantSiteDetailBatchRequestBody -Url $urls -BatchId $BatchId
+                # create a formatted HTTP batch body
+                $batchBody = New-SharePointTenantSiteDetailBatchRequestBody -Url $restEndpoints -BatchId $batchId
 
-            $batch = [PSCustomObject] @{
-                         BatchId          = $batchId
-                         BatchBody        = $batchBody
-                         SitesIds         = $ids
-                         TenantAdminUrl   = $tenantAdminUrl        # used to connect in runspace
-                         TenantConnection = $connectionInformation # used to connect in runspace
-                     }
+                $model = [SiteDetailBatchRequestModel]::new()
+                $model.BatchId          = $batchId
+                $model.BatchBody        = $batchBody
+                $model.SiteIdList       = $batch
+                $model.TenantAdminUrl   = $tenantAdminUrl        # used to connect in runspace
+                $model.TenantConnection = $connectionInformation # used to connect in runspace
 
-            # add to the collection of batches to execute
-            $batches.Add($batch)
-
-            $startIndex += $chunkSize
+                $models.Add($model)
+            }
+            catch
+            {
+                Write-PSFMessage `
+                        -Message     "Failed to contruct batch requests" `
+                        -Level       "Critical" `
+                        -ErrorRecord $_
+            }
         }
-
-        return ,$batches
     }
     end
     {
+        Write-PSFMessage "Completed" -Level Verbose
+
+        return ,$models
     }        
 }

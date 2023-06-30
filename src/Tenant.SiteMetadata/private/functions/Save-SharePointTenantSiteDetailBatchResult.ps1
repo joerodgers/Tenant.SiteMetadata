@@ -30,23 +30,23 @@
 
             while( -not $BatchResponse.IsEmpty )
             {
-                $rawresponse = $null
+                $rawResponse = $null
 
                 $batchId = $BatchResponse.Keys | Select-Object -First 1
 
                 Write-PSFMessage -Message "Removing batch '$batchId'" -Level Verbose
 
-                if( -not $BatchResponse.TryRemove( $batchId, [ref] $rawresponse ) )
+                if( -not $BatchResponse.TryRemove( $batchId, [ref] $rawResponse ) )
                 {
                     Write-PSFMessage -Message "Failed to remove $batchId from batch responses" -Level Error
                     continue
                 }
 
                 # convert the raw batch response text into a PSObject List
-                $sitesList = Convert-SharePointTenantBatchResponse -BatchResponse $rawresponse
+                $detailedTenantSiteModelList = ConvertTo-DetailedTenantSiteModelList -BatchResponse $rawResponse
 
-                # merge the site data in the batch response
-                Save-SharePointTenantActiveSite -SiteList $sitesList
+                # save to database
+                Save-TenantSiteModel -TenantSiteModelList $detailedTenantSiteModelList
             }
 
             Start-Sleep -Seconds 1
