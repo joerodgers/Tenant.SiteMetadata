@@ -38,8 +38,12 @@ function Import-SiteCollection
         # backfill as many SiteIds as possible, the bulk of these should be RedirectSite#0 templates
         $tenantSiteModelList = Add-MissingTenantSiteModelSiteId -TenantSiteModelList $tenantSiteModelList -BatchSize 2000 -ErrorAction Stop
 
+        $count = $tenantSiteModelList.count
+
         # remove any remaining entries with no SiteId value
         $tenantSiteModelList = [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Where( $tenantSiteModelList, $noSiteIDPredicate ) )
+
+        Write-PSFMessage "Removed $( $count - $tenantSiteModelList.Count) sites due to missing SiteId value" -Level Verbose
 
         # save active sites into database
         Save-TenantSiteModel -TenantSiteModelList $tenantSiteModelList -ErrorAction Stop
