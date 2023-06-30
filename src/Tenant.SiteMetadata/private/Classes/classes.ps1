@@ -1,6 +1,7 @@
 ﻿using namespace Tenant.SiteMetadata
 
 # defaulting all these to null to force the JSON to be NULL, which forces proc_AddOrUpdateSiteCollection to only update columns with non-null values
+<#
 
 if ( -not "SiteDetailBatchRequestModel" -as [Type] ) 
 {
@@ -22,6 +23,7 @@ if ( -not "SiteDetailBatchRequestModel" -as [Type] )
         $TenantConnection
     }
 }
+#>
 
 if ( -not "TenantSiteModel" -as [Type] ) 
 {

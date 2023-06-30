@@ -5,14 +5,17 @@
     (
         [Parameter(Mandatory=$true)]
         [System.Collections.Generic.List[TenantSiteModel]]
-        $TenantSiteModelList
+        $TenantSiteModelList,
+
+        [Parameter(Mandatory=$false)]
+        [ValidateRange(1,5000)]
+        [int]
+        $BatchSize = 1000
     )
 
     begin
     {
         Write-PSFMessage "Starting" -Level Verbose
-
-        $chunkSize = 500
 
         $predicate = { param ($model) return $null -ne $model.SiteId } -as [System.Func[TenantSiteModel, bool]]
 
@@ -26,14 +29,14 @@
         Write-PSFMessage "Removed $($TenantSiteModelList.Count - $models.Count) of $($TenantSiteModelList.Count) rows due to missing SiteId"
 
         # break the collection into chunks of 1,000 sites
-        $batches =  [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Chunk( $models, $chunkSize ) )
+        $batches =  [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Chunk( $models, $BatchSize ) )
         
         # process each batch
         foreach( $batch in $batches )
         {
             $counter++
 
-            $rowCount = [Math]::Min( $batch.Count, $chunkSize )  
+            $rowCount = [Math]::Min( $batch.Count, $BatchSize )  
 
             try
             {
