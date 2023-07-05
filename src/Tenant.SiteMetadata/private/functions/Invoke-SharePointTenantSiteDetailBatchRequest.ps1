@@ -3,6 +3,12 @@ function Invoke-SharePointTenantSiteDetailBatchRequest
 {
     begin
     {
+        # set a process scoped environment variable to increase the HttpClient timeout from 100 to 500 seconds
+        if( -not [Environment]::GetEnvironmentVariable( "SharePointPnPHttpTimeout", [System.EnvironmentVariableTarget]::Process )  )
+        {
+            [Environment]::SetEnvironmentVariable( "SharePointPnPHttpTimeout", "500", [System.EnvironmentVariableTarget]::Process )
+        }
+        
         $batchRequest   = $PSItem
         $batchResponses = $using:batchResponses
         $batchErrors    = $using:batchErrors
@@ -49,6 +55,7 @@ function Invoke-SharePointTenantSiteDetailBatchRequest
                                                 -ErrorAction Stop
                    
                     $null = $batchResponses.TryAdd( $batchRequest.BatchId, $batchResponse )
+
                     return
                 }
                 catch
@@ -59,7 +66,7 @@ function Invoke-SharePointTenantSiteDetailBatchRequest
 
                         $retrySeconds = $attempts * 10
 
-                        $logger.TryAdd( "Batch $($batchRequest.BatchId) failed $attempts times, retrying in $retrySeconds seconds. Error: $($_.ToString())")
+                        # $batchErrors.TryAdd( "Batch $($batchRequest.BatchId) failed $attempts times, retrying in $retrySeconds seconds. Error: $($_.ToString())")
 
                         Start-Sleep -Seconds $retrySeconds
 
@@ -67,6 +74,7 @@ function Invoke-SharePointTenantSiteDetailBatchRequest
                     }
 
                     $batchErrors.TryAdd( $batchRequest.BatchId, "Failed to process batch $($batchRequest.BatchId). Error: $($_.ToString())" )
+                    
                     return
                 }
             }

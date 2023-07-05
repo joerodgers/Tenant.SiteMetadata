@@ -19,11 +19,11 @@
     {
         while( $BatchExecutionJob.State -eq 'Running' -or -not $BatchResponse.IsEmpty )
         {
-            Write-PSFMessage -Message "Batch Job Information: Id=$($BatchExecutionJob.Id), State=$($BatchExecutionJob.State)" -Level Verbose
+            Write-PSFMessage -Message "Batch Job Information: JobId=$($BatchExecutionJob.Id), State=$($BatchExecutionJob.State)" -Level Verbose
 
             if( $BatchResponse.IsEmpty )
             {
-                Write-PSFMessage -Message "Waiting for batch results" -Level Verbose
+                # Write-PSFMessage -Message "Waiting for batch results" -Level Verbose
                 Start-Sleep -Seconds 1
                 continue
             }
@@ -42,11 +42,11 @@
                     continue
                 }
 
-                # convert the raw batch response text into a PSObject List
+                # convert the raw batch response text into a DetailedTenantSiteModel List
                 $detailedTenantSiteModelList = ConvertTo-DetailedTenantSiteModelList -BatchResponse $rawResponse
 
                 # save to database
-                Save-TenantSiteModel -TenantSiteModelList $detailedTenantSiteModelList
+                Save-TenantSiteModel -TenantSiteModelList $detailedTenantSiteModelList -BatchSize ($detailedTenantSiteModelList.Count) -ErrorAction Stop
             }
 
             Start-Sleep -Seconds 1

@@ -12,6 +12,8 @@ function Import-SiteCollectionAdministrator
 
     begin
     {
+        Write-PSFMessage "Starting" -Level Verbose
+
         $cmdletExecutionId = Start-CmdletExecution -Cmdlet $PSCmdlet -ClearErrors
     }
     process
@@ -55,6 +57,8 @@ function Import-SiteCollectionAdministrator
     end
     {
         Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $Error.Count
+
+        Write-PSFMessage "Completed" -Level Verbose
     }
 }
 

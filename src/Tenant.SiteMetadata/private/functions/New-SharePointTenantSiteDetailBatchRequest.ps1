@@ -30,6 +30,8 @@
         # break the collection into chunks of 100 sites (max supported)
         $batches =  [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Chunk( $SiteId, $BatchSize ) )
 
+        Write-PSFMessage "Created $($batches.Count) batch requests." -Level Verbose
+
         # process each batch
         foreach( $batch in $batches )
         {
@@ -42,17 +44,6 @@
 
                 # create a formatted HTTP batch body
                 $batchBody = New-SharePointTenantSiteDetailBatchRequestBody -Url $restEndpoints -BatchId $batchId
-
-                <#
-                $model = [SiteDetailBatchRequestModel]::new()
-                $model.BatchId          = $batchId
-                $model.BatchBody        = $batchBody
-                $model.SiteIdList       = $batch
-                $model.TenantAdminUrl   = $tenantAdminUrl        # used to connect in runspace
-                $model.TenantConnection = $connectionInformation # used to connect in runspace
-
-                $models.Add($model)
-                #>
 
                 $model = [PSCustomObject] @{
                     BatchId          = $batchId

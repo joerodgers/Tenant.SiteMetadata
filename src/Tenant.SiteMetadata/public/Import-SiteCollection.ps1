@@ -8,12 +8,25 @@ function Import-SiteCollection
     param
     (
         [Parameter(Mandatory=$false)]
+        [ValidateRange(1,10)]
         [int]
-        $ThrottleLimit = 2
+        $ThrottleLimit = 2,
+
+        [Parameter(Mandatory=$false)]
+        [ValidateRange(1,100)]
+        [int]
+        $HttpBatchSize = 50,
+
+        [Parameter(Mandatory=$false)]
+        [ValidateRange(1,5000)]
+        [int]
+        $SqlBatchSize = 1000
     )
 
     begin
     {
+        Write-PSFMessage "Starting" -Level Verbose
+
         $cmdletExecutionId = Start-CmdletExecution -Cmdlet $PSCmdlet -ClearErrors
         $deletedPredicate  = { param ($model) return $null -ne $model.DeletedDate    } -as [System.Func[TenantSiteModel, bool]]
         $noAccessPredicate = { param ($model) return $model.LockState -ne 'NoAccess' } -as [System.Func[TenantSiteModel, bool]]
@@ -36,7 +49,7 @@ function Import-SiteCollection
         $tenantSiteModelList = Join-TenantSiteModelList -OuterList $tenantSiteModelList -InnerList $aggregatedStoreSiteModelList -ErrorAction Stop
 
         # backfill as many SiteIds as possible, the bulk of these should be RedirectSite#0 templates
-        $tenantSiteModelList = Add-MissingTenantSiteModelSiteId -TenantSiteModelList $tenantSiteModelList -BatchSize 2000 -ErrorAction Stop
+        $tenantSiteModelList = Add-MissingTenantSiteModelSiteId -TenantSiteModelList $tenantSiteModelList -ErrorAction Stop
 
         $count = $tenantSiteModelList.count
 
@@ -46,12 +59,12 @@ function Import-SiteCollection
         Write-PSFMessage "Removed $( $count - $tenantSiteModelList.Count) sites due to missing SiteId value" -Level Verbose
 
         # save active sites into database
-        Save-TenantSiteModel -TenantSiteModelList $tenantSiteModelList -ErrorAction Stop
+        Save-TenantSiteModel -TenantSiteModelList $tenantSiteModelList -BatchSize $SqlBatchSize -ErrorAction Stop
 
         $deletedAggregatedStoreSiteModelList = [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Where( $aggregatedStoreSiteModelList, $deletedPredicate ))
 
         # save deleted sites into database
-        Save-TenantSiteModel -TenantSiteModelList $deletedAggregatedStoreSiteModelList -BatchSize 2000  -ErrorAction Stop
+        Save-TenantSiteModel -TenantSiteModelList $deletedAggregatedStoreSiteModelList -BatchSize $SqlBatchSize -ErrorAction Stop
 
         # remove all sites set to NoAccess
         $unlockedTenantSiteModelList = [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Where( $tenantSiteModelList, $noAccessPredicate ))
@@ -61,12 +74,8 @@ function Import-SiteCollection
         # saw a cast failure on a cx environment, explict casting to fix
         $siteIds = $unlockedTenantSiteModelList.SiteId -as [System.Collections.Generic.List[Guid]]
 
-        Write-PSFMessage "SiteId IS NULL:  $($siteIds -eq $null)"
-        Write-PSFMessage "SiteId count:    $($siteIds.Count)"
-        Write-PSFMessage "Collection Type: $($siteIds.GetType().FullName)"
-
         # generate batch requests for each unlocked site so we can pull detailed site information
-        $batchRequests = New-SharePointTenantSiteDetailBatchRequest -SiteId $siteIds -BatchSize 100
+        $batchRequests = New-SharePointTenantSiteDetailBatchRequest -SiteId $siteIds -BatchSize $HttpBatchSize
      
         # these concurrent dictionaries are written to in the parallel runspaces referenced in Invoke-SharePointTenantSiteDetailBatchRequest
         $batchResponses = [System.Collections.Concurrent.ConcurrentDictionary[[string],[PSCustomObject]]]::new()
@@ -87,5 +96,7 @@ function Import-SiteCollection
     end
     {
         Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $Error.Count
+
+        Write-PSFMessage "Completed" -Level Verbose
     }
 }
