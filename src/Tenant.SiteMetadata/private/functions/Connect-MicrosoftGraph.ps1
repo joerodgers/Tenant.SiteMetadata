@@ -25,21 +25,38 @@
             Disconnect-MgGraph
         }
 
-        try 
+        if( $tenantConnectionInformation -is [Tenant.SiteMetadata.ManagedIdentityConnectionInformation] )
         {
-            Write-PSFMessage -Message "Executing Connect-MgGraph with configuration: $($tenantConnectionInformation.ToString())" 
-    
-            $null = Connect-MgGraph `
-                        -ClientId              $tenantConnectionInformation.ClientId.ToString() `
-                        -CertificateThumbprint $tenantConnectionInformation.CertificateThumbprint `
-                        -TenantId              $tenantConnectionInformation.TenantId.ToString() `
-                        -ForceRefresh `
-                        -ErrorAction Stop
+            try 
+            {
+                Write-PSFMessage -Message "Executing Connect-MgGraph with System Assignged Managed Identity" 
+        
+                # requires Microsoft.Graph v2.0.0+
+                $null = Connect-MgGraph -Identity -ErrorAction Stop
+            }
+            catch
+            {
+                Write-PSFMessage -Message "Failed to connect to Microsoft.Graph" -EnableException $true -ErrorRecord $_ -Level Critical
+            }    
         }
-        catch
+        else
         {
-            Write-PSFMessage -Message "Failed to connect to Microsoft.Graph" -EnableException $true -ErrorRecord $_ -Level Critical
-        }    
+            try 
+            {
+                Write-PSFMessage -Message "Executing Connect-MgGraph with configuration: $($tenantConnectionInformation.ToString())" 
+        
+                $null = Connect-MgGraph `
+                            -ClientId              $tenantConnectionInformation.ClientId.ToString() `
+                            -CertificateThumbprint $tenantConnectionInformation.CertificateThumbprint `
+                            -TenantId              $tenantConnectionInformation.TenantId.ToString() `
+                            -ForceRefresh `
+                            -ErrorAction Stop
+            }
+            catch
+            {
+                Write-PSFMessage -Message "Failed to connect to Microsoft.Graph" -EnableException $true -ErrorRecord $_ -Level Critical
+            }    
+        }
     }
     end
     {

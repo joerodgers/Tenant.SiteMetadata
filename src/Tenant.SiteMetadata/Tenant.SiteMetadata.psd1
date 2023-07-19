@@ -3,7 +3,7 @@
     RootModule = 'Tenant.SiteMetadata.psm1'
 
     # Version number of this module.
-    ModuleVersion = '0.0.0.22'
+    ModuleVersion = '0.0.0.23'
 
     # ID used to uniquely identify this module
     GUID = 'ca5d0749-f4ba-47ed-9f9b-c8be132207f5'
@@ -40,7 +40,7 @@
     RequiredModules = @( 
             "Microsoft.Graph.Authentication", 
             "Microsoft.Graph.Users", 
-            "Microsoft.Graph.Groups", 
+            "Microsoft.Graph.Groups",
             "PSFramework", 
             @{ModuleName="PnP.PowerShell"; RequiredVersion="1.12.0" } # Keep in sync with Invoke-SharePointTenantSiteDetailBatchRequest.ps1 and Invoke-SharePointTenantSiteAdministratorRequest.ps1
         )

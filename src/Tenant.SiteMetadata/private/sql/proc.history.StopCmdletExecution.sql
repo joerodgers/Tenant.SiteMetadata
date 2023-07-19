@@ -17,6 +17,6 @@ BEGIN
         history.CmdletExecution
     WHERE   
         Id = @Id AND
-        (EndDate IS NULL OR EndDate < DATEADD(DAT, -30, (CAST(GETDATE() AS DATE))))
+        (EndDate IS NULL OR EndDate < DATEADD(DAY, -30, (CAST(GETDATE() AS DATE))))
 
 END

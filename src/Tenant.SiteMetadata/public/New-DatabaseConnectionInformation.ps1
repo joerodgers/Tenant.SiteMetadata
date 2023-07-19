@@ -30,9 +30,9 @@ function New-DatabaseConnectionInformation
         [switch]
         $Encrypt,
 
-        [Parameter(Mandatory=$true,ParameterSetName="ManagedIdentity")]
-        [switch]
-        $SystemAssignedManagedIdentity,
+        #[Parameter(Mandatory=$true,ParameterSetName="ManagedIdentity")]
+        #[switch]
+        #$SystemAssignedManagedIdentity,
 
         [Parameter(Mandatory=$true,ParameterSetName="SqlAuthentication")]
         [string]

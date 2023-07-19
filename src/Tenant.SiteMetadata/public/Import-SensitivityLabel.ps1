@@ -36,19 +36,24 @@ function Import-SensitivityLabel
     begin
     {
         $cmdletExecutionId = Start-CmdletExecution -Cmdlet $PSCmdlet -ClearErrors
-
     }    
     process
     {
         Assert-MicrosoftGraphConnection -Cmdlet $PSCmdlet
 
-        Select-MgProfile -Name beta -ErrorAction Stop
-
         try 
         {
             Write-PSFMessage -Message "Querying Graph API for sensitivity labels" -Level Verbose
 
-            $sensitivityLabels = Get-MgInformationProtectionPolicyLabel -All -ErrorAction Stop
+            $response = Invoke-MgGraphRequest -Method GET -Uri "beta/informationProtection/policy/labels" -ErrorAction Stop  
+
+            $sensitivityLabels = foreach( $label in $response.value )
+            {
+                [PSCustomObject] @{
+                    Id   = $label.Id
+                    Name = $label.Name
+                }
+            }
         }    
         catch
         {
@@ -65,8 +70,6 @@ function Import-SensitivityLabel
     }
     end
     {
-        Select-MgProfile -Name v1.0
-
         Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $Error.Count
     }
 }
