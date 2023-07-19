@@ -25,7 +25,7 @@
             Disconnect-MgGraph
         }
 
-        if( $tenantConnectionInformation -is [Tenant.SiteMetadata.ManagedIdentityConnectionInformation] )
+        if( $tenantConnectionInformation -is [Tenant.SiteMetadata.ManagedIdentityTenantConnectionInformation] )
         {
             try 
             {
@@ -49,7 +49,6 @@
                             -ClientId              $tenantConnectionInformation.ClientId.ToString() `
                             -CertificateThumbprint $tenantConnectionInformation.CertificateThumbprint `
                             -TenantId              $tenantConnectionInformation.TenantId.ToString() `
-                            -ForceRefresh `
                             -ErrorAction Stop
             }
             catch
