@@ -110,7 +110,7 @@ BEGIN
             Existing.Country                         = ISNULL(New.Country,                         Existing.Country), 
             Existing.CreatedDateTime                 = ISNULL(New.CreatedDateTime,                 Existing.CreatedDateTime), 
             Existing.CreationType                    = ISNULL(New.CreationType,                    Existing.CreationType), 
-            Existing.DeletedDateTime                 = CASE WHEN @isActive = 1 THEN NULL ELSE ISNULL(New.CreationType, Existing.CreationType) END,
+            Existing.DeletedDateTime                 = CASE WHEN @isActive = 1 THEN NULL ELSE ISNULL(New.DeletedDateTime, Existing.DeletedDateTime) END,
             Existing.Department                      = ISNULL(New.Department,                      Existing.Department), 
             Existing.DisplayName                     = ISNULL(New.DisplayName,                     Existing.DisplayName), 
             Existing.EmployeeId                      = ISNULL(New.EmployeeId,                      Existing.EmployeeId), 
