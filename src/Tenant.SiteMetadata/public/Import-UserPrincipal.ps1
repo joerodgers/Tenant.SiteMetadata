@@ -66,7 +66,7 @@
             Write-PSFMessage -Message "Querying Microsoft Graph for active users" -Level Verbose
 
             # query graph to pull all active users
-            $activeUsers = Get-MgUser -Property $properties -ExpandProperty Manager -All
+            $activeUsers = Get-MgUser -Property $properties -ExpandProperty Manager -All -PageSize 5000
 
             # convert the Manager object into just the GUID
             $activeUsers = $activeUsers | Select-Object *, @{Name="Manager"; Expression={$_.Manager.Id}} -ExcludeProperty Manager
@@ -97,7 +97,7 @@
 
             $deletedUserList = New-Object System.Collections.Generic.List[PSCustomObject]
 
-            $deletedusers = Get-MgDirectoryDeletedItem -DirectoryObjectId "microsoft.graph.user" -Property Id, DisplayName, UserPrincipalName, UserType, DeletedDateTime 
+            $deletedusers = Get-MgDirectoryDeletedItem -DirectoryObjectId "microsoft.graph.user" -Property Id, DisplayName, UserPrincipalName, UserType, DeletedDateTime -All -PageSize 1000
 
             # need to reformat the deleted user response from this cmdlet
             foreach( $deletedUser in $deletedusers.AdditionalProperties.value.GetEnumerator() )
@@ -127,6 +127,8 @@
             
                 Invoke-StoredProcedure -StoredProcedure "principal.proc_AddOrUpdateUserPrincipal" -Parameters @{ json =  $json; isActive = $false }
             }
+
+            Write-PSFMessage -Message "Completed user principal import" -Level Verbose
     }
     end
     {

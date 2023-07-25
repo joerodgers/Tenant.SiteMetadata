@@ -6,6 +6,7 @@ BEGIN
         CmdletId   int               NOT NULL,
         StartDate  datetime2(0)      NOT NULL,
         EndDate    datetime2(0)      NULL,
+        Host       nvarchar(255)     NULL,
         ErrorCount int               NULL,
         CONSTRAINT PK_CmdletExecution_Id PRIMARY KEY CLUSTERED (Id ASC)
     )

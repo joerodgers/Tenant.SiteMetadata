@@ -8,7 +8,7 @@ $timestamp = Get-Date -Format FileDateTime
 Start-LogFileLogger -FilePath "C:\_temp\logs\site-collections_$timestamp.csv"
 
 $databaseConnectionInfo = New-DatabaseConnectionInformation `
-    -DatabaseName          "TenantSiteMetadatav3" `
+    -DatabaseName          "TenantSiteMetadata.v4" `
     -DatabaseServer        "localhost\SQLEXPRESS"
 
 $tenantConnectionInfo = New-TenantConnectionInformation `

@@ -57,7 +57,14 @@ function New-SqlServerDatabaseConnection
 
                 $connection.AccessToken = $accessToken
             }
-    
+            elseif( $databaseConnectionInformation -is [Tenant.SiteMetadata.ManagedIdentityTenantConnectionInformation] )
+            {
+                # generate an access token from Azure AD
+                $accessToken = New-AzureSqlAccessToken `
+                                    -ClientId              $databaseConnectionInformation.ClientId `
+                                    -CertificateThumbprint $databaseConnectionInformation.CertificateThumbprint `
+                                    -TenantId              $databaseConnectionInformation.TenantId
+            }
             Write-PSFMessage -Level Debug -Message "Opening database connection with connection string: $($sqlConnectionStringBuilder.PSBase.ConnectionString)"
 
             # open the connection

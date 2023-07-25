@@ -24,8 +24,8 @@
         }
 
         $storedProcedureName            = "history.proc_StartCmdletExecution"
-        $storedProcedureParameterString = "@Cmdlet = @Cmdlet"
-        $storedProcedureParameterValues = @{ Cmdlet = $Cmdlet.MyInvocation.MyCommand.Name }
+        $storedProcedureParameterString = "@Cmdlet = @Cmdlet, @Host = @Host"
+        $storedProcedureParameterValues = @{ Cmdlet = $Cmdlet.MyInvocation.MyCommand.Name; Host = $env:COMPUTERNAME }
         $storedProcedureExectionString  = "EXEC $storedProcedureName $storedProcedureParameterString"
     
         Invoke-ScalarQuery `

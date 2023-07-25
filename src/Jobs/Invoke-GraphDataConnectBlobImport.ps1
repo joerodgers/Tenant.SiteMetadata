@@ -9,7 +9,7 @@ Start-LogFileLogger -FilePath "C:\_temp\logs\graph-data-connect_$timestamp.csv"
 
 
 $databaseConnectionInfo = New-DatabaseConnectionInformation `
-    -DatabaseName          "TenantSiteMetadatav3" `
+    -DatabaseName          "TenantSiteMetadata.v4" `
     -DatabaseServer        "localhost\SQLEXPRESS"
 
 $tenantConnectionInfo = New-TenantConnectionInformation `
