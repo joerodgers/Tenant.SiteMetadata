@@ -97,22 +97,29 @@
 
             $deletedUserList = New-Object System.Collections.Generic.List[PSCustomObject]
 
-            $deletedusers = Get-MgDirectoryDeletedItem -DirectoryObjectId "microsoft.graph.user" -Property Id, DisplayName, UserPrincipalName, UserType, DeletedDateTime -All -PageSize 999
+            $uri = 'v1.0/directory/deleteditems/microsoft.graph.user?$select=Id,DisplayName,UserPrincipalName,UserType,DeletedDateTime&$top=999'
 
-            # need to reformat the deleted user response from this cmdlet
-            foreach( $deletedUser in $deletedusers.AdditionalProperties.value.GetEnumerator() )
+            do
             {
-                $deletedUserList.Add((
-                    [PSCustomObject] @{
-                        Id                = $deletedUser.id
-                        DisplayName       = $deletedUser.displayName
-                        UserPrincipalName = $deletedUser.userPrincipalName -replace ($deletedUser.id -replace"-", ""), ""
-                        UserType          = $deletedUser.userType
-                        DeletedDateTime   = $deletedUser.deletedDateTime
-                    }
-                ))
+                $results = Invoke-MgRestMethod -Method GET -Uri $uri
+            
+                foreach( $result in $results.value )
+                {
+                    $deletedUser =  [PSCustomObject] @{
+                                        Id                = $result.id
+                                        DisplayName       = $result.displayName
+                                        UserPrincipalName = $result.userPrincipalName -replace ($result.id -replace"-", ""), ""
+                                        UserType          = $result.userType
+                                        DeletedDateTime   = $result.deletedDateTime
+                                    }
+
+                    $deletedUserList.Add($deletedUser)
+                }
+            
+                $uri = $results.'@odata.nextLink'
             }
- 
+            while( $uri )
+
             Write-PSFMessage -Message "Microsoft Graph returned $($deletedUserList.Count) deleted users" -Level Verbose
 
             # break list into chunks of $BatchSize
