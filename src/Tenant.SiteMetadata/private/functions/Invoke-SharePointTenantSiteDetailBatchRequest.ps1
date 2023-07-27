@@ -60,15 +60,11 @@ function Invoke-SharePointTenantSiteDetailBatchRequest
                 }
                 catch
                 {
-                    if( $attempts -lt $MaxRetryAttempts )
+                    if( $attempts -le $MaxRetryAttempts )
                     {
+                        Start-Sleep -Seconds ($attempts * 60)
+
                         $attempts++
-
-                        $retrySeconds = $attempts * 10
-
-                        # $batchErrors.TryAdd( "Batch $($batchRequest.BatchId) failed $attempts times, retrying in $retrySeconds seconds. Error: $($_.ToString())")
-
-                        Start-Sleep -Seconds $retrySeconds
 
                         continue
                     }
