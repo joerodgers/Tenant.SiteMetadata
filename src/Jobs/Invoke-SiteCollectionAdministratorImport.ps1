@@ -21,6 +21,8 @@ Connect-Service `
     -DatabaseConnectionInformation $databaseConnectionInfo `
     -TenantConnectionInformation   $tenantConnectionInfo
 
-Import-SiteCollectionAdministrator -ThrottleLimit 5 -Verbose
+Import-SiteCollectionAdministrator -ThrottleLimit 5 -SharePointSites -Verbose
+
+Import-SiteCollectionAdministrator -ThrottleLimit 5 -OneDriveSites -Verbose
 
 Stop-LogFileLogger

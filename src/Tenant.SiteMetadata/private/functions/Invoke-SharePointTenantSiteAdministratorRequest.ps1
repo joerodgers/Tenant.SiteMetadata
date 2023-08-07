@@ -3,6 +3,12 @@ function Invoke-SharePointTenantSiteAdministratorRequest
 {
     begin
     {
+        # set a process scoped environment variable to increase the HttpClient timeout from 100 to 500 seconds
+        if( -not [Environment]::GetEnvironmentVariable( "SharePointPnPHttpTimeout", [System.EnvironmentVariableTarget]::Process )  )
+        {
+            [Environment]::SetEnvironmentVariable( "SharePointPnPHttpTimeout", "500", [System.EnvironmentVariableTarget]::Process )
+        }
+
         $batchRequest   = $PSItem
         $batchResponses = $using:siteAdministratorsBatchResponses
         $batchErrors    = $using:siteAdministratorsBatchErrors
@@ -15,61 +21,58 @@ function Invoke-SharePointTenantSiteAdministratorRequest
     {
         # connect to tenant
 
-            try
-            {
-                Import-Module -Name "PnP.PowerShell" -RequiredVersion "1.12.0" -ErrorAction Stop
+        try
+        {
+            Import-Module -Name "PnP.PowerShell" -RequiredVersion "1.12.0" -ErrorAction Stop
 
-                $connection = Connect-PnPOnline `
-                                        -Url        $batchRequest.TenantAdminUrl `
-                                        -ClientId   $batchRequest.TenantConnection.ClientId.ToString() `
-                                        -Thumbprint $batchRequest.TenantConnection.CertificateThumbprint `
-                                        -Tenant     $batchRequest.TenantConnection.TenantId.ToString() `
-                                        -ReturnConnection `
-                                        -ErrorAction Stop
-            }
-            catch
-            {
-                $batchErrors.TryAdd( $batchRequest.BatchId, "Failed to connect to tenant for batch request. Error: $($_.ToString())" )
-                return
-            }
+            $connection = Connect-PnPOnline `
+                                    -Url        $batchRequest.TenantAdminUrl `
+                                    -ClientId   $batchRequest.TenantConnection.ClientId.ToString() `
+                                    -Thumbprint $batchRequest.TenantConnection.CertificateThumbprint `
+                                    -Tenant     $batchRequest.TenantConnection.TenantId.ToString() `
+                                    -ReturnConnection `
+                                    -ErrorAction Stop
+        }
+        catch
+        {
+            $batchErrors.TryAdd( $batchRequest.BatchId, "Failed to connect to tenant for batch request. Error: $($_.ToString())" )
+            return
+        }
 
         # execute batch request
 
-            while( $attempts -le 10 )
+        while( $attempts -le 10 )
+        {
+            try 
             {
-                try 
-                {
-                    $batchResponse = Invoke-PnPSPRestMethod `
-                                                -Method      'Post' `
-                                                -Url         '/_api/$batch' `
-                                                -ContentType "multipart/mixed; boundary=batch_$($batchRequest.BatchId)" `
-                                                -Content     $batchRequest.BatchBody`
-                                                -Connection  $connection `
-                                                -Raw `
-                                                -ErrorAction Stop
-                   
-                    $null = $batchResponses.TryAdd( $batchRequest.BatchId, $batchResponse )
-                    return
-                }
-                catch
-                {
-                    if( $attempts -lt $MaxRetryAttempts )
-                    {
-                        $attempts++
-
-                        $retrySeconds = $attempts * 10
-
-                        $logger.TryAdd( "Batch $($batchRequest.BatchId) failed $attempts times, retrying in $retrySeconds seconds. Error: $($_.ToString())")
-
-                        Start-Sleep -Seconds $retrySeconds
-
-                        continue
-                    }
-
-                    $batchErrors.TryAdd( $batchRequest.BatchId, "Failed to process batch $($batchRequest.BatchId). Error: $($_.ToString())" )
-                    return
-                }
+                $batchResponse = Invoke-PnPSPRestMethod `
+                                            -Method      'Post' `
+                                            -Url         '/_api/$batch' `
+                                            -ContentType "multipart/mixed; boundary=batch_$($batchRequest.BatchId)" `
+                                            -Content     $batchRequest.BatchBody`
+                                            -Connection  $connection `
+                                            -Raw `
+                                            -ErrorAction Stop
+                
+                $null = $batchResponses.TryAdd( $batchRequest.BatchId, $batchResponse )
+                return
             }
+            catch
+            {
+                if( $attempts -le $MaxRetryAttempts )
+                {
+                    Start-Sleep -Seconds ($attempts * 60)
+
+                    $attempts++
+
+                    continue
+                }
+
+                $batchErrors.TryAdd( $batchRequest.BatchId, "Failed to process batch $($batchRequest.BatchId). Error: $($_.ToString())" )
+                
+                return
+            }
+        }
     }
     end
     {
