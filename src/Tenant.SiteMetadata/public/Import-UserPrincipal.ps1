@@ -58,16 +58,17 @@
     {
         Assert-MicrosoftGraphConnection -Cmdlet $PSCmdlet
 
-        # active users
-
-        Write-PSFMessage -Message "Querying Microsoft Graph for active users" -Level Verbose
-
-        $activeUserList = New-Object System.Collections.Generic.List[PSCustomObject]
+        # active user import
 
         $uri = "v1.0/users?`$top=999&`$Select=$($properties -join ",")&`$Expand=Manager"
+        $counter = 0
 
         do
         {
+            $counter++
+
+            Write-PSFMessage -Message "Executing active user Graph API query number: $counter" -Level Verbose
+
             $results = Invoke-MgRestMethod -Method GET -Uri $uri
 
             foreach( $result in $results.value )
@@ -115,76 +116,49 @@
                                     UserType                        = $result.UserType
                               }
 
-                $activeUserList.Add($activeUser)
+                $json = $activeUser | ConvertTo-Json -Compress -AsArray
+            
+                Invoke-StoredProcedure -StoredProcedure "principal.proc_AddOrUpdateUserPrincipal" -Parameters @{ json =  $json; isActive = $true }  # markActive forces the proc to set DeletedDateTime to NULL
             }
 
             $uri = $results.'@odata.nextLink'
         }
         while( $uri )
 
-        Write-PSFMessage -Message "Microsoft Graph return $($activeUsersList.Count) active users" -Level Verbose
+        # deleted user import
 
-        # break list into chunks of $BatchSize
-        $chunks = [System.Linq.Enumerable]::Chunk( $activeUsersList, $BatchSize )
+        $uri = 'v1.0/directory/deleteditems/microsoft.graph.user?$select=Id,DisplayName,UserPrincipalName,UserType,DeletedDateTime&$top=999'
 
-        # merge each chunk
-        foreach( $chunk in $chunks )
+        $counter = 0
+        do
         {
-            Write-PSFMessage -Message "Merging batch of $($chunk.Count) users" -Level Verbose
+            $counter++
 
-            $list = [System.Linq.Enumerable]::ToList( $chunk )
+            Write-PSFMessage -Message "Executing deleted user Graph API query number: $counter" -Level Verbose
 
-            $json = $list | ConvertTo-Json -Compress
-            
-            Invoke-StoredProcedure -StoredProcedure "principal.proc_AddOrUpdateUserPrincipal" -Parameters @{ json =  $json; isActive = $true }  # markActive forces the proc to set DeletedDateTime to NULL
-        }
-
-        # deleted users
-
-            Write-PSFMessage -Message "Querying Microsoft Graph for deleted users" -Level Verbose
-
-            $deletedUserList = New-Object System.Collections.Generic.List[PSCustomObject]
-
-            $uri = 'v1.0/directory/deleteditems/microsoft.graph.user?$select=Id,DisplayName,UserPrincipalName,UserType,DeletedDateTime&$top=999'
-
-            do
+            $results = Invoke-MgRestMethod -Method GET -Uri $uri
+        
+            foreach( $result in $results.value )
             {
-                $results = Invoke-MgRestMethod -Method GET -Uri $uri
-            
-                foreach( $result in $results.value )
-                {
-                    # these property names are case sensitive in OPENJSON in proc_AddOrUpdateUserPrincipal
-                    $deletedUser =  [PSCustomObject] @{
-                                        Id                = $result.id
-                                        DisplayName       = $result.displayName
-                                        UserPrincipalName = $result.userPrincipalName -replace ($result.id -replace"-", ""), ""
-                                        UserType          = $result.userType
-                                        DeletedDateTime   = $result.deletedDateTime
-                                    }
+                # these property names are case sensitive in OPENJSON in proc_AddOrUpdateUserPrincipal
+                $deletedUser =  [PSCustomObject] @{
+                                    Id                = $result.id
+                                    DisplayName       = $result.displayName
+                                    UserPrincipalName = $result.userPrincipalName -replace ($result.id -replace"-", ""), ""
+                                    UserType          = $result.userType
+                                    DeletedDateTime   = $result.deletedDateTime
+                                }
 
-                    $deletedUserList.Add($deletedUser)
-                }
-            
-                $uri = $results.'@odata.nextLink'
-            }
-            while( $uri )
+                $json = $deletedUser | ConvertTo-Json -Compress -AsArray
 
-            Write-PSFMessage -Message "Microsoft Graph returned $($deletedUserList.Count) deleted users" -Level Verbose
-
-            # break list into chunks of $BatchSize
-            $chunks = [System.Linq.Enumerable]::Chunk( $deletedUserList, $BatchSize )
-
-            # merge each chunk
-            foreach( $chunk in $chunks )
-            {
-                Write-PSFMessage -Message "Merging batch of $($chunk.Count) deleted users" -Level Verbose
-
-                $json = @($chunk) | ConvertTo-Json -Compress -AsArray
-            
                 Invoke-StoredProcedure -StoredProcedure "principal.proc_AddOrUpdateUserPrincipal" -Parameters @{ json =  $json; isActive = $false }
             }
+        
+            $uri = $results.'@odata.nextLink'
+        }
+        while( $uri )
 
-            Write-PSFMessage -Message "Completed user principal import" -Level Verbose
+        Write-PSFMessage -Message "Completed user principal import" -Level Verbose
     }
     end
     {
