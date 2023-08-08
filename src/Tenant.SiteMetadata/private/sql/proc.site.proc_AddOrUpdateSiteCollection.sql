@@ -5,9 +5,7 @@ BEGIN
 
     DECLARE @timestamp datetime2(7) = GETUTCDATE()
 
-    ;WITH
-        sites
-        AS
+    ;WITH sites AS
         (
             SELECT
                 AllowDownloadingNonWebViewableFiles,
@@ -59,7 +57,7 @@ BEGIN
                 OverrideSharingCapability,
                 OverrideTenantAnonymousLinkExpirationPolicy,
                 OverrideTenantExternalUserExpirationPolicy,
-                [Owner] = ISNULL([Owner], '00000000-0000-0000-0000-000000000000'),
+                [Owner] = principal.UserPrincipal.ObjectId, --ISNULL(principal.UserPrincipal.ObjectId, '00000000-0000-0000-0000-000000000000'),
                 PWAEnabled,
                 ReadOnlyAccessPolicy,
                 ReadOnlyForBlockDownloadPolicy,
@@ -147,7 +145,7 @@ BEGIN
                     OverrideSharingCapability                      bit,
                     OverrideTenantAnonymousLinkExpirationPolicy    bit,
                     OverrideTenantExternalUserExpirationPolicy     bit,
-                    [Owner]                                        uniqueidentifier,
+                    [Owner]                                        nvarchar(256),
                     PWAEnabled                                     int,
                     ReadOnlyAccessPolicy                           bit,
                     ReadOnlyForBlockDownloadPolicy                 bit,
@@ -186,6 +184,9 @@ BEGIN
                 site.InformationBarrierMode ON js.IBMode = site.InformationBarrierMode.InformationBarrierMode
                 LEFT JOIN
                 site.LockState ON js.LockState = site.LockState.LockState
+                LEFT JOIN
+                principal.UserPrincipal ON js.Owner = principal.UserPrincipal.UserPrincipalName
+
         )
    
    
@@ -194,7 +195,6 @@ BEGIN
     ON New.SiteId = Existing.SiteId
     WHEN MATCHED THEN
         UPDATE SET
-
             Existing.[Description]                                  = ISNULL( New.[Description],                                  Existing.[Description] ),
             Existing.DisableAppViews                                = ISNULL( New.DisableAppViews,                                Existing.DisableAppViews ),
             Existing.[Status]                                       = ISNULL( New.[Status],                                       Existing.[Status] ),

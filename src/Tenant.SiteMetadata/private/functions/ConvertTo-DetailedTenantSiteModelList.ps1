@@ -93,6 +93,7 @@
                     $model.OverrideSharingCapability                   = $obj.OverrideSharingCapability
                     $model.OverrideTenantAnonymousLinkExpirationPolicy = $obj.OverrideTenantAnonymousLinkExpirationPolicy
                     $model.OverrideTenantExternalUserExpirationPolicy  = $obj.OverrideTenantExternalUserExpirationPolicy
+                    $model.Owner                                       = $obj.Owner
                     $model.PWAEnabled                                  = $obj.PWAEnabled
                     $model.ReadOnlyAccessPolicy                        = $obj.ReadOnlyAccessPolicy
                     $model.ReadOnlyForBlockDownloadPolicy              = $obj.ReadOnlyForBlockDownloadPolicy

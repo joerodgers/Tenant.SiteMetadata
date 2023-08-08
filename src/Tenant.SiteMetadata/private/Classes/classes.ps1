@@ -228,8 +228,8 @@ if ( -not "DetailedTenantSiteModel" -as [Type] )
         [Nullable[bool]]
         $OverrideTenantExternalUserExpirationPolicy
 
-        #[string]
-        #$Owner
+        [string]
+        $Owner
 
         [Nullable[int64]]
         $PWAEnabled
