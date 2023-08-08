@@ -53,9 +53,6 @@
             "UserPrincipalName",
             "UserType"
         )
-
-        # the serialization of the JSON is case sensitive in the OPENJSON statement in SQL, need to make sure all the are pascal cased
-        $pascalCasedSelect = @($properties | ForEach-Object { @{ Name="$_"; Expression=[ScriptBlock]::Create("`$_.$_") }} )
     }
     process
     {
@@ -63,33 +60,84 @@
 
         # active users
 
-            Write-PSFMessage -Message "Querying Microsoft Graph for active users" -Level Verbose
+        Write-PSFMessage -Message "Querying Microsoft Graph for active users" -Level Verbose
 
-            # query graph to pull all active users
-            $activeUsers = Get-MgUser -Property $properties -ExpandProperty Manager -All -PageSize 999
+        $activeUserList = New-Object System.Collections.Generic.List[PSCustomObject]
 
-            # convert the Manager object into just the GUID
-            $activeUsers = $activeUsers | Select-Object *, @{Name="Manager"; Expression={$_.Manager.Id}} -ExcludeProperty Manager
+        $uri = "v1.0/users?`$top=999&`$Select=$($properties -join ",")&`$Expand=Manager"
 
-            # convert to generic collection (for easy chunking) and format the object names for sql json parsing 
-            $activeUsersList = ($activeUsers | Select-Object $pascalCasedSelect) -as [System.Collections.Generic.List[PSCustomObject]]
+        do
+        {
+            $results = Invoke-MgRestMethod -Method GET -Uri $uri
 
-            Write-PSFMessage -Message "Microsoft Graph return $($activeUsersList.Count) active users" -Level Verbose
-
-            # break list into chunks of $BatchSize
-            $chunks = [System.Linq.Enumerable]::Chunk( $activeUsersList, $BatchSize )
-
-            # merge each chunk
-            foreach( $chunk in $chunks )
+            foreach( $result in $results.value )
             {
-                Write-PSFMessage -Message "Merging batch of $($chunk.Count) users" -Level Verbose
+                # these property names are case sensitive in OPENJSON in proc_AddOrUpdateUserPrincipal
+                $activeUser = [PSCustomObject] @{
+                                    AccountEnabled                  = $result.AccountEnabled
+                                    City                            = $result.City
+                                    CompanyName                     = $result.CompanyName
+                                    Country                         = $result.Country
+                                    CreatedDateTime                 = $result.CreatedDateTime
+                                    CreationType                    = $result.CreationType
+                                    DeletedDateTime                 = $result.DeletedDateTime
+                                    Department                      = $result.Department
+                                    DisplayName                     = $result.DisplayName
+                                    EmployeeId                      = $result.EmployeeId
+                                    EmployeeType                    = $result.EmployeeType
+                                    ExternalUserState               = $result.ExternalUserState
+                                    ExternalUserStateChangeDateTime = $result.ExternalUserStateChangeDateTime
+                                    FirstName                       = $result.FirstName
+                                    JobTitle                        = $result.JobTitle
+                                    Surname                         = $result.Surname
+                                    LastPasswordChangeDateTime      = $result.LastPasswordChangeDateTime
+                                    Mail                            = $result.Mail
+                                    MailNickname                    = $result.MailNickname
+                                    Manager                         = $result.Manager.Id
+                                    MobilePhone                     = $result.MobilePhone
+                                    Id                              = $result.Id
+                                    OfficeLocation                  = $result.OfficeLocation
+                                    OnPremisesDistinguishedName     = $result.OnPremisesDistinguishedName
+                                    OnPremisesDomainName            = $result.OnPremisesDomainName
+                                    OnPremisesImmutableId           = $result.OnPremisesImmutableId
+                                    OnPremisesLastSyncDateTime      = $result.OnPremisesLastSyncDateTime
+                                    OnPremisesSamAccountName        = $result.OnPremisesSamAccountName
+                                    OnPremisesSecurityIdentifier    = $result.OnPremisesSecurityIdentifier
+                                    OnPremisesSyncEnabled           = $result.OnPremisesSyncEnabled
+                                    OnPremisesUserPrincipalName     = $result.OnPremisesUserPrincipalName
+                                    PostalCode                      = $result.PostalCode
+                                    PreferredDataLocation           = $result.PreferredDataLocation
+                                    PreferredLanguage               = $result.PreferredLanguage
+                                    State                           = $result.State
+                                    StreetAddress                   = $result.StreetAddress
+                                    UsageLocation                   = $result.UsageLocation
+                                    UserPrincipalName               = $result.UserPrincipalName
+                                    UserType                        = $result.UserType
+                              }
 
-                $list = [System.Linq.Enumerable]::ToList( $chunk )
-
-                $json = $list | ConvertTo-Json -Compress
-                
-                Invoke-StoredProcedure -StoredProcedure "principal.proc_AddOrUpdateUserPrincipal" -Parameters @{ json =  $json; isActive = $true }  # markActive forces the proc to set DeletedDateTime to NULL
+                $activeUserList.Add($activeUser)
             }
+
+            $uri = $results.'@odata.nextLink'
+        }
+        while( $uri )
+
+        Write-PSFMessage -Message "Microsoft Graph return $($activeUsersList.Count) active users" -Level Verbose
+
+        # break list into chunks of $BatchSize
+        $chunks = [System.Linq.Enumerable]::Chunk( $activeUsersList, $BatchSize )
+
+        # merge each chunk
+        foreach( $chunk in $chunks )
+        {
+            Write-PSFMessage -Message "Merging batch of $($chunk.Count) users" -Level Verbose
+
+            $list = [System.Linq.Enumerable]::ToList( $chunk )
+
+            $json = $list | ConvertTo-Json -Compress
+            
+            Invoke-StoredProcedure -StoredProcedure "principal.proc_AddOrUpdateUserPrincipal" -Parameters @{ json =  $json; isActive = $true }  # markActive forces the proc to set DeletedDateTime to NULL
+        }
 
         # deleted users
 
@@ -105,6 +153,7 @@
             
                 foreach( $result in $results.value )
                 {
+                    # these property names are case sensitive in OPENJSON in proc_AddOrUpdateUserPrincipal
                     $deletedUser =  [PSCustomObject] @{
                                         Id                = $result.id
                                         DisplayName       = $result.displayName
