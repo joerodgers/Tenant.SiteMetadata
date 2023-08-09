@@ -60,7 +60,9 @@
 
         # active user import
 
-        $uri = "v1.0/users?`$top=999&`$Select=$($properties -join ",")&`$Expand=Manager"
+        # $uri = "v1.0/users?`$top=999&`$Select=$($properties -join ",")&`$Expand=Manager"
+
+        $uri = "v1.0/users?`$top=999&`$Select=$($properties -join ",")"
         $counter = 0
 
         do
@@ -94,7 +96,7 @@
                                     LastPasswordChangeDateTime      = $result.LastPasswordChangeDateTime
                                     Mail                            = $result.Mail
                                     MailNickname                    = $result.MailNickname
-                                    Manager                         = $result.Manager.Id
+                                  # Manager                         = $result.Manager.Id
                                     MobilePhone                     = $result.MobilePhone
                                     Id                              = $result.Id
                                     OfficeLocation                  = $result.OfficeLocation
