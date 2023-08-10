@@ -39,10 +39,10 @@ function Import-SensitivityLabel
     }    
     process
     {
-        Assert-MicrosoftGraphConnection -Cmdlet $PSCmdlet
-
         try 
         {
+            Assert-MicrosoftGraphConnection -Cmdlet $PSCmdlet
+
             Write-PSFMessage -Message "Querying Graph API for sensitivity labels" -Level Verbose
 
             $response = Invoke-MgGraphRequest -Method GET -Uri "beta/informationProtection/policy/labels" -ErrorAction Stop  
@@ -54,19 +54,19 @@ function Import-SensitivityLabel
                     Name = $label.Name
                 }
             }
+
+            $json = $sensitivityLabels | Select-Object Id, Name | ConvertTo-Json
+
+            Write-PSFMessage -Message "Merging $($sensitivityLabels.Count) sensitivity labels into database" -Level Verbose
+    
+            Invoke-StoredProcedure -StoredProcedure "site.proc_AddOrUpdateSensitivityLabel" -Parameters @{ json = $json }
         }    
         catch
         {
-            Write-PSFMessage -Message "Failed to retrieve sensitivity labels from Microsoft.Graph" -EnableException $true -ErrorRecord $_ -Level Critical
-            return
+            Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $global:Error.Count
+
+            Write-PSFMessage -Message "Failed to import sensitivity labels" -ErrorRecord $_ -EnableException $true -Level Critical
         }
-
-
-        $json = $sensitivityLabels | Select-Object Id, Name | ConvertTo-Json
-
-        Write-PSFMessage -Message "Merging $($sensitivityLabels.Count) sensitivity labels into database" -Level Verbose
-
-        Invoke-StoredProcedure -StoredProcedure "site.proc_AddOrUpdateSensitivityLabel" -Parameters @{ json = $json }
     }
     end
     {

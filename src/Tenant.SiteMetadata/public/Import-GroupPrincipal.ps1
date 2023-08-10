@@ -20,10 +20,10 @@
     }
     process
     {
-        Assert-MicrosoftGraphConnection -Cmdlet $PSCmdlet
-
         try
         {
+            Assert-MicrosoftGraphConnection -Cmdlet $PSCmdlet
+
             while( $groupsUri )
             {
                 Write-PSFMessage -Message "Executing Graph API group batch query #$((++$counter))" -Level Verbose

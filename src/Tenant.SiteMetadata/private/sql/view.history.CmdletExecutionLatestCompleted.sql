@@ -17,6 +17,7 @@ AS
         Cmdlet,
         StartDate,
         EndDate,
+        DATEDIFF(MINUTE, StartDate, COALESCE(EndDate, GETUTCDATE())) AS 'TotalMinutes',
         Host,
         ErrorCount
     FROM

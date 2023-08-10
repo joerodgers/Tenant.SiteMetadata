@@ -21,10 +21,10 @@
     }
     process
     {
-        Assert-MicrosoftGraphConnection -Cmdlet $PSCmdlet
-
         try
         {
+            Assert-MicrosoftGraphConnection -Cmdlet $PSCmdlet
+
             while( $activeUserUri )
             {
                 Write-PSFMessage -Message "Executing active user Graph API query number: $((++$counter))" -Level Verbose
@@ -110,7 +110,7 @@
 
             Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $global:Error.Count
 
-            Write-PSFMessage -Message "Failed to import active user principals." -ErrorRecord $_ -EnableException $true 
+            Write-PSFMessage -Message "Failed to import active user principals." -ErrorRecord $_ -EnableException $true -Level Critical
         }
 
         try
@@ -165,7 +165,7 @@
 
             Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $global:Error.Count
 
-            Write-PSFMessage -Message "Failed to import deleted user principals." -ErrorRecord $_ -EnableException $true 
+            Write-PSFMessage -Message "Failed to import deleted user principals." -ErrorRecord $_ -EnableException $true -Level Critical
         }
 
         $principalList = $null
