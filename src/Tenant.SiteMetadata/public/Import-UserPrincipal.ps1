@@ -5,78 +5,36 @@
     (
         [Parameter(Mandatory=$false)]
         [int]
-        $BatchSize = 1000
+        $BatchSize = 5000
     )
 
     begin
     {
         $cmdletExecutionId = Start-CmdletExecution -Cmdlet $PSCmdlet -ClearErrors
 
-        $properties = @(
-            "AccountEnabled",
-            "City",
-            "CompanyName",
-            "Country",
-            "CreatedDateTime",
-            "CreationType",
-            "DeletedDateTime",
-            "Department",
-            "DisplayName",
-            "EmployeeId",
-            "EmployeeType",
-            "ExternalUserState",
-            "ExternalUserStateChangeDateTime",
-            "FirstName",
-            "JobTitle",
-            "Surname",
-            "LastPasswordChangeDateTime",
-            "Mail",
-            "MailNickname",
-            "Manager",
-            "MobilePhone",
-            "Id",
-            "OfficeLocation",
-            "OnPremisesDistinguishedName",
-            "OnPremisesDomainName",
-            "OnPremisesImmutableId",
-            "OnPremisesLastSyncDateTime",
-            "OnPremisesSamAccountName",
-            "OnPremisesSecurityIdentifier",
-            "OnPremisesSyncEnabled",
-            "OnPremisesUserPrincipalName",
-            "PostalCode",
-            "PreferredDataLocation",
-            "PreferredLanguage",
-            "State",
-            "StreetAddress",
-            "UsageLocation",
-            "UserPrincipalName",
-            "UserType"
-        )
+        $activeUserUri  = 'v1.0/users?$top=999&$Select=AccountEnabled,City,CompanyName,Country,CreatedDateTime,CreationType,DeletedDateTime,Department,DisplayName,EmployeeId,EmployeeType,ExternalUserState,ExternalUserStateChangeDateTime,FirstName,JobTitle,Surname,LastPasswordChangeDateTime,Mail,MailNickname,Manager,MobilePhone,Id,OfficeLocation,OnPremisesDistinguishedName,OnPremisesDomainName,OnPremisesImmutableId,OnPremisesLastSyncDateTime,OnPremisesSamAccountName,OnPremisesSecurityIdentifier,OnPremisesSyncEnabled,OnPremisesUserPrincipalName,PostalCode,PreferredDataLocation,PreferredLanguage,State,StreetAddress,UsageLocation,UserPrincipalName,UserType'
+        $deletedUserUri = 'v1.0/directory/deleteditems/microsoft.graph.user?$select=Id,DisplayName,UserPrincipalName,UserType,DeletedDateTime&$top=999'
+    
+        $counter = 0
+        
+        $principalList = New-Object System.Collections.Generic.List[PSCustomObject]
     }
     process
     {
         Assert-MicrosoftGraphConnection -Cmdlet $PSCmdlet
 
-        # active user import
-
-        # $uri = "v1.0/users?`$top=999&`$Select=$($properties -join ",")&`$Expand=Manager"
-
-        $uri = "v1.0/users?`$top=999&`$Select=$($properties -join ",")"
-        $counter = 0
-
-        do
+        try
         {
-            $counter++
-
-            Write-PSFMessage -Message "Executing active user Graph API query number: $counter" -Level Verbose
-
-            $results = Invoke-MgRestMethod -Method GET -Uri $uri
-
-            foreach( $result in $results.value )
+            while( $activeUserUri )
             {
-                # these property names are case sensitive in OPENJSON in proc_AddOrUpdateUserPrincipal
-                $activeUser = [PSCustomObject] @{
+                Write-PSFMessage -Message "Executing active user Graph API query number: $((++$counter))" -Level Verbose
+
+                $results = Invoke-MgRestMethod -Method GET -Uri $activeUserUri
+
+                foreach( $result in $results.value )
+                {
+                    # these property names are case sensitive in OPENJSON in proc_AddOrUpdateUserPrincipal
+                    $principal = [PSCustomObject] @{
                                     AccountEnabled                  = $result.AccountEnabled
                                     City                            = $result.City
                                     CompanyName                     = $result.CompanyName
@@ -116,54 +74,106 @@
                                     UsageLocation                   = $result.UsageLocation
                                     UserPrincipalName               = $result.UserPrincipalName
                                     UserType                        = $result.UserType
-                              }
-
-                $json = $activeUser | ConvertTo-Json -Compress -AsArray
-            
-                Invoke-StoredProcedure -StoredProcedure "principal.proc_AddOrUpdateUserPrincipal" -Parameters @{ json =  $json; isActive = $true }  # markActive forces the proc to set DeletedDateTime to NULL
-            }
-
-            $uri = $results.'@odata.nextLink'
-        }
-        while( $uri )
-
-        # deleted user import
-
-        $uri = 'v1.0/directory/deleteditems/microsoft.graph.user?$select=Id,DisplayName,UserPrincipalName,UserType,DeletedDateTime&$top=999'
-
-        $counter = 0
-        do
-        {
-            $counter++
-
-            Write-PSFMessage -Message "Executing deleted user Graph API query number: $counter" -Level Verbose
-
-            $results = Invoke-MgRestMethod -Method GET -Uri $uri
-        
-            foreach( $result in $results.value )
-            {
-                # these property names are case sensitive in OPENJSON in proc_AddOrUpdateUserPrincipal
-                $deletedUser =  [PSCustomObject] @{
-                                    Id                = $result.id
-                                    DisplayName       = $result.displayName
-                                    UserPrincipalName = $result.userPrincipalName -replace ($result.id -replace"-", ""), ""
-                                    UserType          = $result.userType
-                                    DeletedDateTime   = $result.deletedDateTime
                                 }
 
-                $json = $deletedUser | ConvertTo-Json -Compress -AsArray
+                    $principalList.Add($principal)
 
-                Invoke-StoredProcedure -StoredProcedure "principal.proc_AddOrUpdateUserPrincipal" -Parameters @{ json =  $json; isActive = $false }
+                    if( $principalList.Count -ge $BatchSize )
+                    {
+                        Write-PSFMessage -Message "Merging $($principalList.Count) active user principals" -Level Verbose
+
+                        $json = $principalList | ConvertTo-Json -Compress -AsArray
+                
+                        Invoke-StoredProcedure -StoredProcedure "principal.proc_AddOrUpdateUserPrincipal" -Parameters @{ json =  $json; isActive = $true } -ErrorAction Stop # markActive forces the proc to set DeletedDateTime to NULL
+                        
+                        $principalList.Clear()
+                    }
+                }
+
+                $activeUserUri = $results.'@odata.nextLink'
             }
+
+            if( $principalList.Count -gt 0 )
+            {
+                Write-PSFMessage -Message "Merging $($principalList.Count) active user principals" -Level Verbose
+
+                $json = $principalList | ConvertTo-Json -Compress -AsArray
         
-            $uri = $results.'@odata.nextLink'
+                Invoke-StoredProcedure -StoredProcedure "principal.proc_AddOrUpdateUserPrincipal" -Parameters @{ json =  $json; isActive = $true } -ErrorAction Stop # markActive forces the proc to set DeletedDateTime to NULL
+            }
+
+            $principalList.Clear()
         }
-        while( $uri )
+        catch
+        {
+            $principalList = $null
+
+            Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $global:Error.Count
+
+            Write-PSFMessage -Message "Failed to import active user principals." -ErrorRecord $_ -EnableException $true 
+        }
+
+        try
+        {
+            $counter = 0
+            $principalList.Clear()
+
+            while( $deletedUserUri )
+            {
+                Write-PSFMessage -Message "Executing deleted user Graph API query number: $((++$counter))" -Level Verbose
+
+                $results = Invoke-MgRestMethod -Method GET -Uri $deletedUserUri
+            
+                foreach( $result in $results.value )
+                {
+                    # these property names are case sensitive in OPENJSON in proc_AddOrUpdateUserPrincipal
+                    $principal =  [PSCustomObject] @{
+                                        Id                = $result.id
+                                        DisplayName       = $result.displayName
+                                        UserPrincipalName = $result.userPrincipalName -replace ($result.id -replace"-", ""), ""
+                                        UserType          = $result.userType
+                                        DeletedDateTime   = $result.deletedDateTime
+                                    }
+
+                    $principalList.Add($principal)
+
+                    if( $principalList.Count -ge $BatchSize )
+                    {
+                        Write-PSFMessage -Message "Merging $($principalList.Count) deleted user principals" -Level Verbose
+
+                        $json = $principalList | ConvertTo-Json -Compress -AsArray
+
+                        Invoke-StoredProcedure -StoredProcedure "principal.proc_AddOrUpdateUserPrincipal" -Parameters @{ json =  $json; isActive = $false } -ErrorAction Stop # markActive forces the proc to set DeletedDateTime to NULL
+                    }
+                }
+            
+                $deletedUserUri = $results.'@odata.nextLink'
+            }
+
+            if( $principalList.Count -gt 0 )
+            {
+                Write-PSFMessage -Message "Merging $($principalList.Count) deleted user principals" -Level Verbose
+
+                $json = $principalList | ConvertTo-Json -Compress -AsArray
+        
+                Invoke-StoredProcedure -StoredProcedure "principal.proc_AddOrUpdateUserPrincipal" -Parameters @{ json =  $json; isActive = $false } -ErrorAction Stop # markActive forces the proc to set DeletedDateTime to NULL
+            }
+        }
+        catch
+        {
+            $principalList = $null
+
+            Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $global:Error.Count
+
+            Write-PSFMessage -Message "Failed to import deleted user principals." -ErrorRecord $_ -EnableException $true 
+        }
+
+        $principalList = $null
 
         Write-PSFMessage -Message "Completed user principal import" -Level Verbose
     }
     end
     {
-        Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $Error.Count
+        Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $global:Error.Count
     }
 }

@@ -4,119 +4,107 @@
     param
     (
         [Parameter(Mandatory=$false)]
-        [string]
-        $Filter,
-
-        [Parameter(Mandatory=$false)]
-        [ValidateRange(100,999)]
         [int]
-        $PageSize = 100
+        $BatchSize = 5000
     )
 
     begin
     {
         $cmdletExecutionId = Start-CmdletExecution -Cmdlet $PSCmdlet -ClearErrors
 
-        $properties = @(
-            "AssignedLabels"
-            "Classification", 
-            "CreatedDateTime", 
-            "DeletedDateTime", 
-            "Description", 
-            "DisplayName", 
-            "ExpirationDateTime",
-            "GroupTypes",
-            "Id",
-            "IsAssignableToRole",
-            "Mail", 
-            "MailEnabled",
-            "MailNickname",
-            "MembershipRule",
-            "MembershipRuleProcessingState",
-            "ObjectId", 
-            "OnPremisesLastSyncDateTime",
-            "OnPremisesSamAccountName",
-            "OnPremisesSecurityIdentifier",
-            "OnPremisesSyncEnabled",
-            "PreferredDataLocation",
-            "PreferredLanguage",
-            "RenewedDateTime",
-            "ResourceProvisioningOptions",
-            "SecurityEnabled",
-            "SecurityIdentifier"
-            "Theme",
-            "Visibility"
-        )
+        $counter = 0
 
-        $selectProperties = @(
-            @{ Name = "Classification";                Expression={ $_.Classification }}
-            @{ Name = "CreatedDateTime";               Expression={ $_.CreatedDateTime }}
-            @{ Name = "DeletedDateTime";               Expression={ $_.DeletedDateTime }}
-            @{ Name = "Description";                   Expression={ $_.Description }}
-            @{ Name = "DisplayName";                   Expression={ $_.DisplayName }}
-            @{ Name = "ExpirationDateTime";            Expression={ $_.ExpirationDateTime }}
-            @{ Name = "IsAssignableToRole";            Expression={ $_.IsAssignableToRole }}
-            @{ Name = "IsUnifiedGroup";                Expression={ $_.GroupTypes -contains "Unified" }}
-            @{ Name = "IsTeamsGroup";                  Expression={ $_.ResourceProvisioningOptions -contains "Team" }}
-            @{ Name = "IsPublic";                      Expression={ $_.Visibility -eq "Public" }}
-            @{ Name = "Mail";                          Expression={ $_.Mail }}
-            @{ Name = "MailEnabled";                   Expression={ $_.MailEnabled }}
-            @{ Name = "MailNickname";                  Expression={ $_.MailNickname }}
-            @{ Name = "MembershipRule";                Expression={ $_.MembershipRule }}
-            @{ Name = "MembershipRuleProcessingState"; Expression={ $_.MembershipRuleProcessingState }}
-            @{ Name = "ObjectId";                      Expression={ $_.Id }}
-            @{ Name = "OnPremisesLastSyncDateTime";    Expression={ $_.OnPremisesLastSyncDateTime }}
-            @{ Name = "OnPremisesSamAccountName";      Expression={ $_.OnPremisesSamAccountName }}
-            @{ Name = "OnPremisesSecurityIdentifier";  Expression={ $_.OnPremisesSecurityIdentifier }}
-            @{ Name = "OnPremisesSyncEnabled";         Expression={ $_.OnPremisesSyncEnabled }}
-            @{ Name = "PreferredDataLocation";         Expression={ $_.PreferredDataLocation }}
-            @{ Name = "PreferredLanguage";             Expression={ $_.PreferredLanguage }}
-            @{ Name = "RenewedDateTime";               Expression={ $_.RenewedDateTime }}
-            @{ Name = "SecurityEnabled";               Expression={ $_.SecurityEnabled }}
-            @{ Name = "SecurityIdentifier";            Expression={ $_.SecurityIdentifier }}
-            @{ Name = "SensitivityLabel";              Expression={ $_.assignedLabels.labelId }}
-            @{ Name = "Theme";                         Expression={ $_.Theme }}
-        )
+        $groupsUri = '/v1.0/groups?$top=999&$select=Classification,CreatedDateTime,DeletedDateTime,Description,DisplayName,ExpirationDateTime,GroupTypes,Id,IsAssignableToRole,Mail,MailEnabled,MailNickname,MembershipRule,MembershipRuleProcessingState,ObjectId,OnPremisesLastSyncDateTime,OnPremisesSamAccountName,OnPremisesSecurityIdentifier,OnPremisesSyncEnabled,PreferredDataLocation,PreferredLanguage,RenewedDateTime,ResourceProvisioningOptions,SecurityEnabled,SecurityIdentifier,Theme,Visibility' -f ($properties -join ",")
+
+        $principalList = New-Object System.Collections.Generic.List[PSCustomObject]
     }
     process
     {
         Assert-MicrosoftGraphConnection -Cmdlet $PSCmdlet
 
-        $counter  = 1
-        $total    = 0
-        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-
-        $uri = '/v1.0/groups?$top={0}&$select={1}' -f $PageSize, ($properties -join ",")
-
-        while( $uri )
+        try
         {
-            Write-PSFMessage -Message "Executing Graph API group batch query #$counter" -Level Verbose
-
-            $response = Invoke-MgRestMethod -Method GET -Uri $uri -Verbose:$false
-        
-            if( $response.value )
+            while( $groupsUri )
             {
-                $json = $response.value | Select-Object $selectProperties | ConvertTo-Json -Compress
+                Write-PSFMessage -Message "Executing Graph API group batch query #$((++$counter))" -Level Verbose
+    
+                $results = Invoke-MgRestMethod -Method GET -Uri $groupsUri
+            
+                foreach( $result in $results.value )
+                {
+                    # these property names are case sensitive in OPENJSON in proc_AddOrUpdateGroupPrincipal
+                    $principal = [PSCustomObject] @{
+                        Classification                 = $result.Classification
+                        CreatedDateTime                = $result.CreatedDateTime
+                        DeletedDateTime                = $result.DeletedDateTime
+                        Description                    = $result.Description
+                        DisplayName                    = $result.DisplayName
+                        ExpirationDateTime             = $result.ExpirationDateTime
+                        IsAssignableToRole             = $result.IsAssignableToRole
+                        IsUnifiedGroup                 = $result.GroupTypes -contains "Unified"
+                        IsTeamsGroup                   = $result.ResourceProvisioningOptions -contains "Team"
+                        IsPublic                       = $result.Visibility -eq "Public"
+                        Mail                           = $result.Mail
+                        MailEnabled                    = $result.MailEnabled
+                        MailNickname                   = $result.MailNickname
+                        MembershipRule                 = $result.MembershipRule
+                        MembershipRuleProcessingState  = $result.MembershipRuleProcessingState
+                        ObjectId                       = $result.Id
+                        OnPremisesLastSyncDateTime     = $result.OnPremisesLastSyncDateTime
+                        OnPremisesSamAccountName       = $result.OnPremisesSamAccountName
+                        OnPremisesSecurityIdentifier   = $result.OnPremisesSecurityIdentifier
+                        OnPremisesSyncEnabled          = $result.OnPremisesSyncEnabled
+                        PreferredDataLocation          = $result.PreferredDataLocation
+                        PreferredLanguage              = $result.PreferredLanguage
+                        RenewedDateTime                = $result.RenewedDateTime
+                        SecurityEnabled                = $result.SecurityEnabled
+                        SecurityIdentifier             = $result.SecurityIdentifier
+                        SensitivityLabel               = $result.assignedLabels.labelId
+                        Theme                          = $result.Theme
+                    }
 
-                Write-PSFMessage -Message "Merging $($response.value.Count) group principals into database" -Level Verbose
+                    $principalList.Add($principal)
 
+                    if( $principalList.Count -ge $BatchSize )
+                    {
+                        Write-PSFMessage -Message "Merging $($principalList.Count) group principals" -Level Verbose
+
+                        $json = $principalList | ConvertTo-Json -Compress -AsArray
+                
+                        Invoke-StoredProcedure -StoredProcedure "principal.proc_AddOrUpdateGroupPrincipal" -Parameters @{ json =  $json }
+                        
+                        $principalList.Clear()
+                    }
+                }
+    
+                $groupsUri = $results.'@odata.nextLink'
+            }
+
+            if( $principalList.Count -gt 0 )
+            {
+                Write-PSFMessage -Message "Merging $($principalList.Count) group principals" -Level Verbose
+
+                $json = $principalList | ConvertTo-Json -Compress -AsArray
+        
                 Invoke-StoredProcedure -StoredProcedure "principal.proc_AddOrUpdateGroupPrincipal" -Parameters @{ json =  $json }
-            }
-            else
-            {
-                Write-PSFMessage -Message "Not results returned from group paged query" -Level Warning
+                
             }
 
-            $uri = $response.'@odata.nextLink'
+            $principalList = $null
 
-            $counter++
-            $total += $response.value.Count
+            Write-PSFMessage -Message "Completed group import." -Level Verbose
         }
-        
-        Write-PSFMessage -Message "Completed importing $total groups in $([Math]::Round($stopwatch.Elapsed.TotalMinutes,2)) minutes" -Level Verbose
+        catch
+        {
+            $principalList = $null
+
+            Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $global:Error.Count
+
+            Write-PSFMessage -Message "Failed to import group principals." -ErrorRecord $_ -EnableException $true 
+        }
     }
     end
     {
-        Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $Error.Count
+        Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $global:Error.Count
     }
 }

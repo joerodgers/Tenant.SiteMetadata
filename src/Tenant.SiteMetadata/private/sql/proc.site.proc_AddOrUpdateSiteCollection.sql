@@ -189,7 +189,6 @@ BEGIN
 
         )
    
-   
     MERGE INTO site.SiteCollection AS Existing
     USING sites AS New
     ON New.SiteId = Existing.SiteId

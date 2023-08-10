@@ -20,7 +20,7 @@
     {
         if( $ClearErrors.IsPresent )
         {
-            $Error.Clear()
+            $global:Error.Clear()
         }
 
         $storedProcedureName            = "history.proc_StartCmdletExecution"

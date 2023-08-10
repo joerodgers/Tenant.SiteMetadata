@@ -3,9 +3,13 @@
     [CmdletBinding()]
     param
     (
-        [Parameter(Mandatory=$true,ValueFromPipeline=$true)]
+        [Parameter(Mandatory=$true,ValueFromPipeline=$true,ParameterSetName="DataRow")]
         [System.Data.DataRow[]]
-        $DataRow
+        $DataRow,
+
+        [Parameter(Mandatory=$true,ValueFromPipeline=$true,ParameterSetName="HashTable")]
+        [System.Collections.Hashtable]
+        $HashTable
     )
 
     begin
@@ -14,9 +18,23 @@
     }
     process
     {
-        foreach( $row in $DataRow )
+        if( $PSCmdlet.ParameterSetName -eq "DataRow" )
         {
-            $row | Select-Object * -ExcludeProperty $excludedProperties | ConvertTo-Json | ConvertFrom-Json
+            foreach( $row in $DataRow )
+            {
+                $row | Select-Object * -ExcludeProperty $excludedProperties | ConvertTo-Json | ConvertFrom-Json
+            }
+        }
+        else
+        {
+            $object = [PSCustomObject] @{}
+
+            foreach( $key in $HashTable.Keys )
+            {
+                $object | Add-Member -MemberType NoteProperty -Name $key -Value $HashTable.$Key
+            }
+            
+            return $object
         }
     }
     end

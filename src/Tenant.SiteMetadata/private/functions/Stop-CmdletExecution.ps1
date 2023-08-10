@@ -9,7 +9,7 @@
 
         [Parameter(Mandatory=$false)]
         [int]
-        $ErrorCount = $Error.Count
+        $ErrorCount = $global:Error.Count
     )
 
     begin
