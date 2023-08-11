@@ -20,8 +20,8 @@ function New-SharePointTenantSiteAdministratorBatchRequest
     }
     process
     {
-        # split the endpoints in the chunks of 100 requests
-        $batches = [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Chunk( $List, 10 <# spo has a max batch size of 100 #> ))
+        # split the endpoints in the chunks of 10 requests
+        $batches = [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Chunk( $List, 14 <# spo has a max batch size of 10 #> ))
         
         Write-PSFMessage -Message "Created $($chunks.Count) chunks" -Level Debug
 

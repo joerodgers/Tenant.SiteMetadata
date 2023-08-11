@@ -100,7 +100,7 @@
 
             Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $global:Error.Count
 
-            Write-PSFMessage -Message "Failed to import group principals." -ErrorRecord $_ -EnableException $true 
+            Write-PSFMessage -Message "Failed to import group principals." -ErrorRecord $_ -EnableException $true -Level Critical
         }
     }
     end
