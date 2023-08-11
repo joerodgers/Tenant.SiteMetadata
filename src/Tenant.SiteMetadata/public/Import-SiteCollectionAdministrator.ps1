@@ -64,10 +64,12 @@ function Import-SiteCollectionAdministrator
             # save the batch results as they are returned
             Save-SharePointTenantSiteAdministratorBatchResult -BatchRequest $batchRequests -BatchResponse $siteAdministratorsBatchResponses -BatchExecutionJob $batchExecutionJob
             
+            Write-PSFMessage -Message "Site Administrator import completed" -ErrorRecord $_ -EnableException $true -Level Critical
+
             # log any batch execution errors
             foreach( $siteAdministratorsBatchError in $siteAdministratorsBatchErrors.GetEnumerator() )
             {
-                Write-PSFMessage "Batch execution error, BatchId: $($siteAdministratorsBatchError.Key), Error: $($siteAdministratorsBatchError.Value)" -Level Error
+                Write-PSFMessage "Batch execution error, BatchId: $($siteAdministratorsBatchError.Key), Error: $($siteAdministratorsBatchError.Value)" -Level Critical
             }
         }
         catch
@@ -81,7 +83,10 @@ function Import-SiteCollectionAdministrator
     {
         Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $global:Error.Count
 
-        Write-PSFMessage "Completed" -Level Verbose
+        if( $siteAdministratorsBatchErrors.Count -gt 0 )
+        {
+            throw "Failed to execute and import $($siteAdministratorsBatchErrors.Count) batches of site collection admins."
+        }
     }
 }
 

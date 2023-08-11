@@ -87,6 +87,14 @@ function Import-SiteCollection
 
             # save the batch results as they are completed in the runspaces
             Save-SharePointTenantSiteDetailBatchResult -BatchResponse $batchResponses -BatchExecutionJob $batchExecutionJob
+
+            Write-PSFMessage "Completed site metadata import" -Level Verbose
+
+            # log any batch execution errors
+            foreach( $batchError in $batchErrors.GetEnumerator() )
+            {
+                Write-PSFMessage "Batch execution error, BatchId: $($batchError.Key), Error: $($batchError.Value)" -Level Error
+            }
         }
         catch
         {
@@ -94,17 +102,14 @@ function Import-SiteCollection
 
             Write-PSFMessage -Message "Failed to import site metadata" -ErrorRecord $_ -EnableException $true -Level Critical        
         }
-
-        Write-PSFMessage "Completed site metadata import" -Level Verbose
-
-        # log any batch execution errors
-        foreach( $batchError in $batchErrors.GetEnumerator() )
-        {
-            Write-PSFMessage "Batch execution error, BatchId: $($batchError.Key), Error: $($batchError.Value)" -Level Error
-        }
     }
     end
     {
         Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $global:Error.Count
-    }
+
+        if( $batchErrors.Count -gt 0 )
+        {
+            throw "Failed to execute and import $($batchErrors.Count) batches of site metadata. Failure details are recorded in the log file."
+        }
+}
 }
