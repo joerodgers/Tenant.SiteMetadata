@@ -83,7 +83,7 @@ function Import-SiteCollection
             $batchErrors    = [System.Collections.Concurrent.ConcurrentDictionary[[string],[string]]]::new()
 
             # start a backgroup job to process each batch in parallel
-            $batchExecutionJob = $batchRequests | ForEach-Object -ThrottleLimit $ThrottleLimit -Parallel ${function:Invoke-SharePointTenantSiteDetailBatchRequest} -AsJob -ErrorAction Stop
+            $batchExecutionJob = $batchRequests | ForEach-Object -ThrottleLimit $ThrottleLimit -Parallel ${function:Invoke-SharePointTenantSiteDetailBatchRequest} -AsJob
 
             # save the batch results as they are completed in the runspaces
             Save-SharePointTenantSiteDetailBatchResult -BatchResponse $batchResponses -BatchExecutionJob $batchExecutionJob
