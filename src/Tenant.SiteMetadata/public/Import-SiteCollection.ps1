@@ -42,6 +42,7 @@ function Import-SiteCollection
             $tenantSiteModelList          = Get-SharePointTenantSiteModelList -ErrorAction Stop
             $restApiTenantSiteModelList   = Get-SharePointTenantSiteModelList -UseRestApi -ErrorAction Stop
             $aggregatedStoreSiteModelList = Get-SharePointAggregatedStoreTenantSiteModelList -ErrorAction Stop
+            $deletedSiteModelList         = Get-SharePointDeletedSiteModelList -ErrorAction Stop
 
             # merge the two model collections into a single collection
             $tenantSiteModelList = Join-TenantSiteModelList -OuterList $tenantSiteModelList -InnerList $restApiTenantSiteModelList -ErrorAction Stop
@@ -59,12 +60,15 @@ function Import-SiteCollection
 
             Write-PSFMessage "Removed $( $count - $tenantSiteModelList.Count) sites due to missing SiteId value" -Level Verbose
 
-            # save active sites into database
+            # merge active sites into database
             Save-TenantSiteModel -TenantSiteModelList $tenantSiteModelList -BatchSize $SqlBatchSize -ErrorAction Stop
 
             $deletedAggregatedStoreSiteModelList = [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Where( $aggregatedStoreSiteModelList, $deletedPredicate ))
 
-            # save deleted sites into database
+            # merge tenant recycle bin deleted sites (including OD4B sites) into database
+            Save-TenantSiteModel -TenantSiteModelList $deletedSiteModelList -BatchSize $SqlBatchSize -ErrorAction Stop
+
+            # merge agg store deleted sites into database (not sure this is still needed since we added a full tenant recycle bin list above)
             Save-TenantSiteModel -TenantSiteModelList $deletedAggregatedStoreSiteModelList -BatchSize $SqlBatchSize -ErrorAction Stop
 
             # remove all sites set to NoAccess
