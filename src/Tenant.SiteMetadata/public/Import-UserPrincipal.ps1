@@ -127,13 +127,14 @@
                 foreach( $result in $results.value )
                 {
                     # these property names are case sensitive in OPENJSON in proc_AddOrUpdateUserPrincipal
-                    $principal =  [PSCustomObject] @{
-                                        Id                = $result.id
-                                        DisplayName       = $result.displayName
-                                        UserPrincipalName = $result.userPrincipalName -replace ($result.id -replace"-", ""), ""
-                                        UserType          = $result.userType
-                                        DeletedDateTime   = $result.deletedDateTime
-                                    }
+                    $principal = [PSCustomObject] @{
+                                    AccountEnabled    = $false # mark disabled if deleted
+                                    Id                = $result.id
+                                    DisplayName       = $result.displayName
+                                    UserPrincipalName = $result.userPrincipalName -replace ($result.id -replace"-", ""), ""
+                                    UserType          = $result.userType
+                                    DeletedDateTime   = $result.deletedDateTime
+                                 }
 
                     $principalList.Add($principal)
 

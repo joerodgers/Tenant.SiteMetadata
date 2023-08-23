@@ -72,6 +72,28 @@ function Import-SiteCollection
 
             Write-PSFMessage "Removed $( $tenantSiteModelList.Count - $unlockedTenantSiteModelList.Count) 'NoAccess' locked sites from site detail lookup." -Level Verbose
 
+            # pull all tenant sites marked as active
+            $sqlActiveSiteIds = Get-DataTable -Query "SELECT SiteId FROM sharepoint.SitesCollectionActive UNION SELECT SiteId FROM onedrive.SitesCollectionActive" -As "PSObject" | Select-Object -ExpandProperty SiteId
+
+            # saw a cast failure on a cx environment, explict casting to fix
+            $sqlActiveSiteIds = $sqlActiveSiteIds -as [System.Collections.Generic.List[Guid]]
+
+            # saw a cast failure on a cx environment, explict casting to fix
+            $tenantActiveSiteIds = $tenantSiteModelList.SiteId -as [System.Collections.Generic.List[Guid]]
+
+            # get all SiteIds for sites that are marked as active in SQL, but are not present in live tenant dataset
+            $delta = [System.Linq.Enumerable]::ToList([System.Linq.Enumerable]::Except( $sqlActiveSiteIds, $tenantActiveSiteIds ))
+
+            Write-PSFMessage "Discoved $($delta.Count) sites that need to be marked as deleted." -Level Verbose
+
+            foreach( $siteId in $delta )
+            {
+                Write-PSFMessage "Marking orphan site $siteId as deleted." -Level Verbose
+                Invoke-NonQuery -Query "UPDATE sharepoint.SitesCollection SET DeletedDate = @DeletedDate WHERE SiteId = @SiteId" -Parameters @{ SiteId = $siteId; DeletedDate = ([System.Data.SqlTypes.SqlDateTime]::MinValue) }
+            }
+
+            Write-PSFMessage "Marked all $($delta.Count) sites as deleted." -Level Verbose
+
             # saw a cast failure on a cx environment, explict casting to fix
             $siteIds = $unlockedTenantSiteModelList.SiteId -as [System.Collections.Generic.List[Guid]]
 
@@ -111,5 +133,5 @@ function Import-SiteCollection
         {
             throw "Failed to execute and import $($batchErrors.Count) batches of site metadata. Failure details are recorded in the log file."
         }
-}
+    }
 }

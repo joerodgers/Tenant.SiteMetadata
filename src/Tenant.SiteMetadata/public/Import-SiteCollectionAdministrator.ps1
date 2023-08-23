@@ -85,7 +85,7 @@ function Import-SiteCollectionAdministrator
 
         if( $siteAdministratorsBatchErrors.Count -gt 0 )
         {
-            throw "Failed to execute and import $($siteAdministratorsBatchErrors.Count) batches of site collection admins."
+            throw "Failed to execute and import $($siteAdministratorsBatchErrors.Count) batches of site collection admins. Failure details are recorded in the log file."
         }
     }
 }

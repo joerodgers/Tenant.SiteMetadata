@@ -57,7 +57,7 @@ BEGIN
                 OverrideSharingCapability,
                 OverrideTenantAnonymousLinkExpirationPolicy,
                 OverrideTenantExternalUserExpirationPolicy,
-                [Owner] = principal.UserPrincipal.ObjectId, --ISNULL(principal.UserPrincipal.ObjectId, '00000000-0000-0000-0000-000000000000'),
+                [Owner] = COALESCE(upan.ObjectId,upam.ObjectId,'00000000-0000-0000-0000-000000000000'),
                 PWAEnabled,
                 ReadOnlyAccessPolicy,
                 ReadOnlyForBlockDownloadPolicy,
@@ -185,8 +185,9 @@ BEGIN
                 LEFT JOIN
                 site.LockState ON js.LockState = site.LockState.LockState
                 LEFT JOIN
-                principal.UserPrincipal ON js.Owner = principal.UserPrincipal.UserPrincipalName
-
+                principal.UserPrincipalActive upan ON js.Owner = upan.UserPrincipalName
+                LEFT JOIN
+                principal.UserPrincipalActive upam ON js.Owner = upam.Mail
         )
    
     MERGE INTO site.SiteCollection AS Existing
