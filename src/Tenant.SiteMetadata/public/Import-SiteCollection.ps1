@@ -84,12 +84,12 @@ function Import-SiteCollection
             # get all SiteIds for sites that are marked as active in SQL, but are not present in live tenant dataset
             $delta = [System.Linq.Enumerable]::ToList([System.Linq.Enumerable]::Except( $sqlActiveSiteIds, $tenantActiveSiteIds ))
 
-            Write-PSFMessage "Discoved $($delta.Count) sites that need to be marked as deleted." -Level Verbose
+            Write-PSFMessage "Discovered $($delta.Count) sites that need to be marked as deleted." -Level Verbose
 
             foreach( $siteId in $delta )
             {
                 Write-PSFMessage "Marking orphan site $siteId as deleted." -Level Verbose
-                Invoke-NonQuery -Query "UPDATE sharepoint.SitesCollection SET DeletedDate = @DeletedDate WHERE SiteId = @SiteId" -Parameters @{ SiteId = $siteId; DeletedDate = ([System.Data.SqlTypes.SqlDateTime]::MinValue) }
+                Invoke-NonQuery -Query "UPDATE site.SiteCollection SET DeletedDate = @DeletedDate WHERE SiteId = @SiteId" -Parameters @{ SiteId = $siteId; DeletedDate = ([System.Data.SqlTypes.SqlDateTime]::MinValue) }
             }
 
             Write-PSFMessage "Marked all $($delta.Count) sites as deleted." -Level Verbose
