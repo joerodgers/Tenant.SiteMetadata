@@ -1,4 +1,4 @@
-﻿CREATE OR ALTER VIEW sharepoint.SitesCollectionTemplateClassic
+﻿CREATE OR ALTER VIEW sharepoint.SiteCollectionTemplateClassic
 AS
     SELECT    
         *

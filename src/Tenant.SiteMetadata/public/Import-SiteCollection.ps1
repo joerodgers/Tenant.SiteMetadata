@@ -77,7 +77,7 @@ function Import-SiteCollection
             Write-PSFMessage "Removed $( $tenantSiteModelList.Count - $unlockedTenantSiteModelList.Count) 'NoAccess' locked sites from site detail lookup." -Level Verbose
 
             # pull all tenant sites marked as active
-            $sqlActiveSiteIds = Get-DataTable -Query "SELECT SiteId FROM sharepoint.SitesCollectionActive UNION SELECT SiteId FROM onedrive.SitesCollectionActive" -As "PSObject" | Select-Object -ExpandProperty SiteId
+            $sqlActiveSiteIds = Get-DataTable -Query "SELECT SiteId FROM sharepoint.SiteCollectionActive UNION SELECT SiteId FROM onedrive.SiteCollectionActive" -As "PSObject" | Select-Object -ExpandProperty SiteId
 
             # saw a cast failure on a cx environment, explict casting to fix
             $sqlActiveSiteIds = $sqlActiveSiteIds -as [System.Collections.Generic.List[Guid]]
@@ -90,13 +90,26 @@ function Import-SiteCollection
 
             Write-PSFMessage "Discovered $($delta.Count) sites that need to be marked as deleted." -Level Verbose
 
-            foreach( $siteId in $delta )
+            if( $delta.Count -gt 0 )
             {
-                Write-PSFMessage "Marking orphan site $siteId as deleted." -Level Verbose
-                Invoke-NonQuery -Query "UPDATE site.SiteCollection SET DeletedDate = @DeletedDate WHERE SiteId = @SiteId" -Parameters @{ SiteId = $siteId; DeletedDate = ([System.Data.SqlTypes.SqlDateTime]::MinValue) }
-            }
+                $models = New-Object System.Collections.Generic.List[TenantSiteModel]
 
-            Write-PSFMessage "Marked all $($delta.Count) sites as deleted." -Level Verbose
+                foreach( $siteId in $delta )
+                {
+                    $model = [TenantSiteModel]::new()
+                    $model.SiteId      = $siteId
+                    $model.DeletedDate = [System.Data.SqlTypes.SqlDateTime]::MinValue
+                    $models.Add($model)
+                    
+                    # Write-PSFMessage "Marking orphan site '$siteId' as deleted." -Level Verbose
+                    
+                    # Invoke-NonQuery -Query "UPDATE site.SiteCollection SET DeletedDate = @DeletedDate WHERE SiteId = @SiteId" -Parameters @{ SiteId = $siteId; DeletedDate = ([System.Data.SqlTypes.SqlDateTime]::MinValue) }
+                }
+
+                Save-TenantSiteModel -TenantSiteModelList $models -BatchSize $SqlBatchSize -ErrorAction Stop
+
+                Write-PSFMessage "Marked $($delta.Count) sites as deleted." -Level Verbose
+            }
 
             # saw a cast failure on a cx environment, explict casting to fix
             $siteIds = $unlockedTenantSiteModelList.SiteId -as [System.Collections.Generic.List[Guid]]

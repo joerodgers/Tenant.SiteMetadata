@@ -1,4 +1,4 @@
-﻿CREATE OR ALTER VIEW teams.SitesCollectionActive
+﻿CREATE OR ALTER VIEW teams.SiteCollectionActive
 AS
     SELECT    
         *

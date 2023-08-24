@@ -1,4 +1,4 @@
-﻿CREATE OR ALTER VIEW onedrive.SitesCollectionDeleted
+﻿CREATE OR ALTER VIEW onedrive.SiteCollectionDeleted
 AS
     SELECT    
         *

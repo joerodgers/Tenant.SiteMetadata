@@ -1,4 +1,4 @@
-﻿CREATE OR ALTER VIEW teams.SitesCollectionDeleted
+﻿CREATE OR ALTER VIEW teams.SiteCollectionDeleted
 AS
     SELECT    
         *

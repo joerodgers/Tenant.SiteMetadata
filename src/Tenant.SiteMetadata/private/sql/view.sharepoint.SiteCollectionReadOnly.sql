@@ -1,4 +1,4 @@
-﻿CREATE OR ALTER VIEW sharepoint.SitesCollectionReadOnly
+﻿CREATE OR ALTER VIEW sharepoint.SiteCollectionReadOnly
 AS
     SELECT    
         *

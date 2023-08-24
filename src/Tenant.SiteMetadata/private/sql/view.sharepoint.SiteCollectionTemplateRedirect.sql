@@ -1,4 +1,4 @@
-﻿CREATE OR ALTER VIEW sharepoint.SitesCollectionTemplateRedirect
+﻿CREATE OR ALTER VIEW sharepoint.SiteCollectionTemplateRedirect
 AS
     SELECT    
         *

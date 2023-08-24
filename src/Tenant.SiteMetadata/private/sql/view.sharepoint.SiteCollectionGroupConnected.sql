@@ -1,4 +1,4 @@
-﻿CREATE OR ALTER VIEW sharepoint.SitesCollectionGroupConnected
+﻿CREATE OR ALTER VIEW sharepoint.SiteCollectionGroupConnected
 AS
     SELECT    
         *

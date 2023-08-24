@@ -1,4 +1,4 @@
-﻿CREATE OR ALTER VIEW sharepoint.SitesCollectionNoAccess
+﻿CREATE OR ALTER VIEW sharepoint.SiteCollectionNoAccess
 AS
     SELECT    
         *

@@ -1,4 +1,4 @@
-﻿CREATE OR ALTER VIEW onedrive.SitesCollectionActive
+﻿CREATE OR ALTER VIEW onedrive.SiteCollectionActive
 AS
     SELECT    
         *

@@ -33,13 +33,13 @@ function Import-SiteCollectionAdministrator
             if( $PSCmdlet.ParameterSetName -eq "Sharepoint")
             {
                 [System.Collections.Generic.List[Guid]]$siteIds = Get-DataTable `
-                                                                        -Query "SELECT SiteId, LockState FROM sharepoint.SitesCollectionActive WHERE LockState = 1 AND TEMPLATE NOT IN ( 'REDIRECTSITE#0' )" `
+                                                                        -Query "SELECT SiteId, LockState FROM sharepoint.SiteCollectionActive WHERE LockState = 1 AND TEMPLATE NOT IN ( 'REDIRECTSITE#0' )" `
                                                                         -As "PsObject" | Select-Object -ExpandProperty SiteId
             }
             else
             {
                 [System.Collections.Generic.List[Guid]]$siteIds = Get-DataTable `
-                                                                        -Query "SELECT SiteId, LockState FROM onedrive.SitesCollectionActive WHERE LockState = 1" `
+                                                                        -Query "SELECT SiteId, LockState FROM onedrive.SiteCollectionActive WHERE LockState = 1" `
                                                                         -As "PsObject" | Select-Object -ExpandProperty SiteId
             }
 

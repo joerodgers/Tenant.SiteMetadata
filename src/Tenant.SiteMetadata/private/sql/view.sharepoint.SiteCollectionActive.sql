@@ -1,4 +1,4 @@
-﻿CREATE OR ALTER VIEW sharepoint.SitesCollectionDeleted
+﻿CREATE OR ALTER VIEW sharepoint.SiteCollectionActive
 AS
     SELECT    
         *
