@@ -10,10 +10,11 @@
 
     begin
     {
+        $headers = 'Timestamp', 'FunctionName', 'Level', 'Line', 'Message'
     }
     process
     {
-        Set-PSFLoggingProvider -Name "logfile" -Enabled $true -FilePath $FilePath
+        Set-PSFLoggingProvider -Name "logfile" -Enabled $true -FilePath $FilePath -Headers $headers
     }
     end
     {
