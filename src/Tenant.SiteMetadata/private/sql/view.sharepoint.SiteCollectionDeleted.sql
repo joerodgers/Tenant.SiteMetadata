@@ -5,4 +5,4 @@ AS
     FROM
         site.SiteCollection
     WHERE
-        DeletedDate IS NULL AND Template NOT LIKE 'SPS%'
+        DeletedDate IS NOT NULL AND Template NOT LIKE 'SPS%'

@@ -108,7 +108,7 @@ function Import-SiteCollection
 
                 Save-TenantSiteModel -TenantSiteModelList $models -BatchSize $SqlBatchSize -ErrorAction Stop
 
-                Write-PSFMessage "Marked $($delta.Count) sites as deleted." -Level Verbose
+                Write-PSFMessage "Marked $($delta.Count) sites that need to be marked as deleted." -Level Verbose
             }
 
             # saw a cast failure on a cx environment, explict casting to fix
