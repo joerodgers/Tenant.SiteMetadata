@@ -15,12 +15,17 @@
         Write-PSFMessage -Message "Querying tenant for all deleted OD/SP site collections" -Level Verbose
         
         $tenantSites = Get-PnPTenantDeletedSite -IncludePersonalSite -Limit ([System.UInt32]::MaxValue)  
-            
+
         foreach( $ts in $tenantSites )
         {
+            if( [string]::IsNullOrWhiteSpace( $ts.SiteId ) )
+            {
+                continue
+            }
+
             $model = [TenantSiteModel]::new()
             $model.DeletedDate             = $ts.DeletionTime
-            $model.SiteId                  = $null
+            $model.SiteId                  = $ts.SiteId
             $model.SiteUrl                 = $ts.Url
             $model.Status                  = $ts.Status
             $model.StorageMaximumLevel     = $ts.StorageQuota

@@ -34,7 +34,8 @@
         {
             Invoke-StoredProcedure `
                 -StoredProcedure "site.proc_AddOrUpdateSiteAdministrator" `
-                -Parameters      @{ json = $json }`
+                -Parameters      @{ json = $json } `
+                -CommandTimeout  300 `
                 -ErrorAction     Stop
         }
         catch

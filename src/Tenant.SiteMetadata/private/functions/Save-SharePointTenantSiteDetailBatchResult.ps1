@@ -23,7 +23,7 @@
 
             if( $BatchResponse.IsEmpty )
             {
-                # Write-PSFMessage -Message "Waiting for batch results" -Level Verbose
+                Write-PSFMessage -Message "Waiting for more batches to complete" -Level Verbose
                 Start-Sleep -Seconds 1
                 continue
             }

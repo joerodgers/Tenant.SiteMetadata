@@ -188,6 +188,8 @@ BEGIN
                 principal.UserPrincipalActive upan ON js.Owner = upan.UserPrincipalName
                 LEFT JOIN
                 principal.UserPrincipalActive upam ON js.Owner = upam.Mail
+            WHERE
+                js.SiteId IS NOT NULL
         )
    
     MERGE INTO site.SiteCollection AS Existing

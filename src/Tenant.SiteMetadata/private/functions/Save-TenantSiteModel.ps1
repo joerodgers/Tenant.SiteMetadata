@@ -15,21 +15,19 @@
 
     begin
     {
-        Write-PSFMessage "Starting" -Level Verbose
-
-        $predicate = { param ($model) return $null -ne $model.SiteId } -as [System.Func[TenantSiteModel, bool]]
+        # $predicate = { param ($model) return $null -ne $model.SiteId } -as [System.Func[TenantSiteModel, bool]]
 
         $counter = 0
     }
     process
     {
         # make sure all models passed in have a SiteId value
-        $models = [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Where( $TenantSiteModelList, $predicate ) )
+        # $models = [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Where( $TenantSiteModelList, $predicate ) )
        
-        Write-PSFMessage "Removed $($TenantSiteModelList.Count - $models.Count) of $($TenantSiteModelList.Count) rows due to missing SiteId"
+        # Write-PSFMessage "Removed $($TenantSiteModelList.Count - $models.Count) of $($TenantSiteModelList.Count) rows due to missing SiteId"
 
         # break the collection into chunks of 1,000 sites
-        $batches =  [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Chunk( $models, $BatchSize ) )
+        $batches =  [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Chunk( $TenantSiteModelList, $BatchSize ) )
         
         # process each batch
         foreach( $batch in $batches )
@@ -63,6 +61,5 @@
     }
     end
     {
-        Write-PSFMessage "Completed" -Level Verbose
     }
 }

@@ -64,7 +64,7 @@ function Import-SiteCollectionAdministrator
             # save the batch results as they are returned
             Save-SharePointTenantSiteAdministratorBatchResult -BatchRequest $batchRequests -BatchResponse $siteAdministratorsBatchResponses -BatchExecutionJob $batchExecutionJob
             
-            Write-PSFMessage -Message "Site Administrator import completed" -ErrorRecord $_ -EnableException $true -Level Critical
+            Write-PSFMessage -Message "Site Administrator import completed" -Level Verbose
 
             # log any batch execution errors
             foreach( $siteAdministratorsBatchError in $siteAdministratorsBatchErrors.GetEnumerator() )
