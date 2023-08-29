@@ -1,2 +1,7 @@
 
 dev
+
+# Ignore staging info from Visual Studio
+src/assembly/.vs/*
+src/assembly/Tenant.SiteMetadata/bin/*
+src/assembly/Tenant.SiteMetadata/obj/*
