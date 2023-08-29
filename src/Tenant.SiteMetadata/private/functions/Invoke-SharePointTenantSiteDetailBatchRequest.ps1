@@ -35,7 +35,19 @@ function Invoke-SharePointTenantSiteDetailBatchRequest
         }
         catch
         {
-            $batchErrors.TryAdd( $batchRequest.BatchId, "Failed to connect to tenant for batch request. Error: $($_.ToString())" )
+            $ex = [PSCustomObject] @{
+                Timestamp    = Get-Date
+                Message      = "Failed to connect to tenant for batch request."
+                Attempts     = 1
+                ErrorRecord  = $_.ToString()
+                Exception    = $_.Exception.ToString()
+                BatchId      = $batchRequest.BatchId
+                BatchBoday   = $batchRequest.BatchBody
+                PnPException = (Get-PnPException) 
+            }
+            
+            $batchErrors.TryAdd( $batchRequest.BatchId, ($ex | ConvertTo-Json -Compress) )
+
             return
         }
 
@@ -49,7 +61,7 @@ function Invoke-SharePointTenantSiteDetailBatchRequest
                                             -Method      'Post' `
                                             -Url         '/_api/$batch' `
                                             -ContentType "multipart/mixed; boundary=batch_$($batchRequest.BatchId)" `
-                                            -Content     $batchRequest.BatchBody`
+                                            -Content     $batchRequest.BatchBody `
                                             -Connection  $connection `
                                             -Raw `
                                             -ErrorAction Stop
@@ -69,7 +81,20 @@ function Invoke-SharePointTenantSiteDetailBatchRequest
                     continue
                 }
 
-                $batchErrors.TryAdd( $batchRequest.BatchId, "Failed to process batch $($batchRequest.BatchId). Error: $($_.ToString())" )
+                $pnpex = Get-PnPException | Format-List * -Force | Out-String
+
+                $ex = [PSCustomObject] @{
+                    Timestamp    = Get-Date
+                    Message      = "Failed to process batch $($batchRequest.BatchId) after $attempts attempts."
+                    Attempts     = $attempts
+                    ErrorRecord  = $_.ToString()
+                    Exception    = $_.Exception.ToString()
+                    BatchId      = $batchRequest.BatchId
+                    BatchBoday   = $batchRequest.BatchBody
+                    PnPException = $pnpex
+                }
+
+                $batchErrors.TryAdd( $batchRequest.BatchId, ($ex | ConvertTo-Json -Compress) )
                 
                 return
             }

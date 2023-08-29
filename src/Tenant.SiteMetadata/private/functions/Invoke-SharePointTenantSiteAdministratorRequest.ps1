@@ -35,7 +35,19 @@ function Invoke-SharePointTenantSiteAdministratorRequest
         }
         catch
         {
-            $batchErrors.TryAdd( $batchRequest.BatchId, "Failed to connect to tenant for batch request. Error: $($_.ToString())" )
+            $ex = [PSCustomObject] @{
+                Timestamp    = Get-Date
+                Message      = "Failed to connect to tenant for batch request."
+                Attempts     = 1
+                ErrorRecord  = $_.ToString()
+                Exception    = $_.Exception.ToString()
+                BatchId      = $batchRequest.BatchId
+                BatchBoday   = $batchRequest.BatchBody
+                PnPException = (Get-PnPException) 
+            }
+            
+            $batchErrors.TryAdd( $batchRequest.BatchId, ($ex | ConvertTo-Json -Compress) )
+
             return
         }
 
@@ -68,8 +80,19 @@ function Invoke-SharePointTenantSiteAdministratorRequest
                     continue
                 }
 
-                $batchErrors.TryAdd( $batchRequest.BatchId, "Failed to process batch $($batchRequest.BatchId). Error: $($_.ToString())" )
-                
+                $ex = [PSCustomObject] @{
+                    Timestamp    = Get-Date
+                    Message      = "Failed to process batch $($batchRequest.BatchId) after $attempts attempts."
+                    Attempts     = $attempts
+                    ErrorRecord  = $_.ToString()
+                    Exception    = $_.Exception.ToString()
+                    BatchId      = $batchRequest.BatchId
+                    BatchBoday   = $batchRequest.BatchBody
+                    PnPException = (Get-PnPException) 
+                }
+
+                $batchErrors.TryAdd( $batchRequest.BatchId, ($ex | ConvertTo-Json -Compress) )
+
                 return
             }
         }
