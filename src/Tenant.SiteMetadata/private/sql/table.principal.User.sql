@@ -53,4 +53,7 @@ BEGIN
     INSERT INTO principal.UserPrincipal (ObjectId, DisplayName, UserPrincipalName, PrincipalType, RowCreated, RowUpdated) VALUES ( '00000000-0000-0000-0000-000000000000', 'Unknown',               'Unknown',        1,  @timestamp, @timestamp)
     INSERT INTO principal.UserPrincipal (ObjectId, DisplayName, UserPrincipalName, PrincipalType, RowCreated, RowUpdated) VALUES ( '00000003-0000-0ff1-ce00-000000000000', 'SharePoint Online App', 'app@sharepoint', 1,  @timestamp, @timestamp)
 
+    CREATE NONCLUSTERED INDEX IX_UserPrincipal_UserPrincipalName ON principal.UserPrincipal (UserPrincipalName ASC)
+    CREATE NONCLUSTERED INDEX IX_UserPrincipal_DeletedDateTime   ON principal.UserPrincipal (DeletedDateTime   ASC)
+
 END

@@ -67,6 +67,7 @@ function Invoke-SharePointTenantSiteAdministratorRequest
                                             -ErrorAction Stop
                 
                 $null = $batchResponses.TryAdd( $batchRequest.BatchId, $batchResponse )
+
                 return
             }
             catch
@@ -80,6 +81,8 @@ function Invoke-SharePointTenantSiteAdministratorRequest
                     continue
                 }
 
+                $pnpex = Get-PnPException | Format-List * -Force | Out-String
+
                 $ex = [PSCustomObject] @{
                     Timestamp    = Get-Date
                     Message      = "Failed to process batch $($batchRequest.BatchId) after $attempts attempts."
@@ -88,7 +91,7 @@ function Invoke-SharePointTenantSiteAdministratorRequest
                     Exception    = $_.Exception.ToString()
                     BatchId      = $batchRequest.BatchId
                     BatchBoday   = $batchRequest.BatchBody
-                    PnPException = (Get-PnPException) 
+                    PnPException = $pnpex
                 }
 
                 $batchErrors.TryAdd( $batchRequest.BatchId, ($ex | ConvertTo-Json -Compress) )
