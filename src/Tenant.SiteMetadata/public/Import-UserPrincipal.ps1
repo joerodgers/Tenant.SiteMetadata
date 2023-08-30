@@ -145,6 +145,8 @@
                         $json = $principalList | ConvertTo-Json -Compress -AsArray
 
                         Invoke-StoredProcedure -StoredProcedure "principal.proc_AddOrUpdateUserPrincipal" -Parameters @{ json =  $json; isActive = $false } -ErrorAction Stop # markActive forces the proc to set DeletedDateTime to NULL
+                    
+                        $principalList.Clear()
                     }
                 }
             
