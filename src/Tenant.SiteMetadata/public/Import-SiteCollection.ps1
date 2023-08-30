@@ -30,6 +30,8 @@ function Import-SiteCollection
         $deletedPredicate  = { param ($model) return $null -ne $model.DeletedDate    } -as [System.Func[TenantSiteModel, bool]]
         $noAccessPredicate = { param ($model) return $model.LockState -ne 'NoAccess' } -as [System.Func[TenantSiteModel, bool]]
         $noSiteIDPredicate = { param ($model) return $null -ne $model.SiteId }         -as [System.Func[TenantSiteModel, bool]]
+    
+        $allSqlExceptions = @()
     }
     process
     {
@@ -61,15 +63,21 @@ function Import-SiteCollection
             Write-PSFMessage "Removed $( $count - $tenantSiteModelList.Count) sites due to missing SiteId value" -Level Verbose
 
             # merge active sites into database
-            Save-TenantSiteModel -TenantSiteModelList $tenantSiteModelList -BatchSize $SqlBatchSize -ErrorAction Stop
+            Save-TenantSiteModel -TenantSiteModelList $tenantSiteModelList -BatchSize $SqlBatchSize -ErrorVariable "sqlexceptions" -ErrorAction Stop
+
+            $allSqlExceptions += $sqlexceptions
 
             $deletedAggregatedStoreSiteModelList = [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Where( $aggregatedStoreSiteModelList, $deletedPredicate ))
 
             # merge tenant recycle bin deleted sites (including OD4B sites) into database
-            Save-TenantSiteModel -TenantSiteModelList $deletedSiteModelList -BatchSize $SqlBatchSize -ErrorAction Stop
+            Save-TenantSiteModel -TenantSiteModelList $deletedSiteModelList -BatchSize $SqlBatchSize -ErrorVariable "sqlexceptions" -ErrorAction Stop
 
-            # merge agg store deleted sites into database (not sure this is still needed since we added a full tenant recycle bin list above)
-            Save-TenantSiteModel -TenantSiteModelList $deletedAggregatedStoreSiteModelList -BatchSize $SqlBatchSize -ErrorAction Stop
+            $allSqlExceptions += $sqlexceptions
+
+            # merge agg store deleted sites into database (has more metadata data than records from tenant recycle bin)
+            Save-TenantSiteModel -TenantSiteModelList $deletedAggregatedStoreSiteModelList -BatchSize $SqlBatchSize -ErrorVariable "sqlexceptions" -ErrorAction Stop
+
+            $allSqlExceptions += $sqlexceptions
 
             # remove all sites set to NoAccess
             $unlockedTenantSiteModelList = [System.Linq.Enumerable]::ToList( [System.Linq.Enumerable]::Where( $tenantSiteModelList, $noAccessPredicate ))
@@ -100,13 +108,11 @@ function Import-SiteCollection
                     $model.SiteId      = $siteId
                     $model.DeletedDate = [System.Data.SqlTypes.SqlDateTime]::MinValue
                     $models.Add($model)
-                    
-                    # Write-PSFMessage "Marking orphan site '$siteId' as deleted." -Level Verbose
-                    
-                    # Invoke-NonQuery -Query "UPDATE site.SiteCollection SET DeletedDate = @DeletedDate WHERE SiteId = @SiteId" -Parameters @{ SiteId = $siteId; DeletedDate = ([System.Data.SqlTypes.SqlDateTime]::MinValue) }
                 }
 
-                Save-TenantSiteModel -TenantSiteModelList $models -BatchSize $SqlBatchSize -ErrorAction Stop
+                Save-TenantSiteModel -TenantSiteModelList $models -BatchSize $SqlBatchSize -ErrorVariable "sqlexceptions" -ErrorAction Stop
+
+                $allSqlExceptions += $sqlexceptions
 
                 Write-PSFMessage "Marked $($delta.Count) sites that need to be marked as deleted." -Level Verbose
             }
@@ -125,7 +131,7 @@ function Import-SiteCollection
             $batchExecutionJob = $batchRequests | ForEach-Object -ThrottleLimit $ThrottleLimit -Parallel ${function:Invoke-SharePointTenantSiteDetailBatchRequest} -AsJob
 
             # save the batch results as they are completed in the runspaces
-            Save-SharePointTenantSiteDetailBatchResult -BatchResponse $batchResponses -BatchExecutionJob $batchExecutionJob
+            Save-SharePointTenantSiteDetailBatchResult -BatchResponse $batchResponses -BatchExecutionJob $batchExecutionJob -ErrorVariable "sqlexceptions"
 
             Write-PSFMessage "Completed site metadata import" -Level Verbose
 
@@ -134,21 +140,27 @@ function Import-SiteCollection
             {
                 Write-PSFMessage "Batch execution error, BatchId: $($batchError.Key), Error: $($batchError.Value)" -Level Error
             }
+
+            # log any sql execution errors
+            foreach( $sqlexception in $allSqlExceptions )
+            {
+                Write-PSFMessage "SQL update failed." -ErrorRecord $sqlexception -Level Error
+            }
         }
         catch
         {
             Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $global:Error.Count
 
-            Write-PSFMessage -Message "Failed to import site metadata" -ErrorRecord $_ -EnableException $true -Level Critical        
+            Write-PSFMessage -Message "Failed to successfully import all site metadata.  Exception details included in log file." -ErrorRecord $_ -EnableException $true -Level Critical        
         }
     }
     end
     {
         Stop-CmdletExecution -Id $cmdletExecutionId -ErrorCount $global:Error.Count
 
-        if( $batchErrors.Count -gt 0 )
+        if( $batchErrors.Count -gt 0 -or $allSqlExceptions.Count -gt 0 )
         {
-            throw "Failed to execute and import $($batchErrors.Count) batches of site metadata. Failure details are recorded in the log file."
+            throw "Failed to execute or import $($batchErrors.Count + $sqlexceptions.Count) batches of site metadata. Failure details are recorded in the log file."
         }
     }
 }

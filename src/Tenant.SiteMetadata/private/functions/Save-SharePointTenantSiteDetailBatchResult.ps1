@@ -45,8 +45,14 @@
                 # convert the raw batch response text into a DetailedTenantSiteModel List
                 $detailedTenantSiteModelList = ConvertTo-DetailedTenantSiteModelList -BatchResponse $rawResponse
 
-                # save to database
-                Save-TenantSiteModel -TenantSiteModelList $detailedTenantSiteModelList -BatchSize ($detailedTenantSiteModelList.Count) -ErrorAction Stop
+                try
+                {
+                    Save-TenantSiteModel -TenantSiteModelList $detailedTenantSiteModelList -BatchSize ($detailedTenantSiteModelList.Count) -ErrorVariable "sqlexceptions" -ErrorAction Stop
+                }
+                catch
+                {
+                    Write-PSFMessage -Message "Error saving site metadata." -ErrorRecord $_ -Level Error
+                }
             }
 
             Start-Sleep -Seconds 1

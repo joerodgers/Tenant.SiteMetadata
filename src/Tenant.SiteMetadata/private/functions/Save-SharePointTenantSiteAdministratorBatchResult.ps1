@@ -92,8 +92,15 @@
 
                 $total += $administrators.Count
 
-                # merge the site data in the batch response
-                Save-SharePointTenantSiteAdministrator -Identity $administrators
+                try 
+                {
+                    # merge the site data in the batch response
+                    Save-SharePointTenantSiteAdministrator -Identity $administrators
+                }
+                catch
+                {
+                    Write-PSFMessage -Message "Error saving administrator metadata." -ErrorRecord $_ -Level Error
+                }
             }
         }
     }

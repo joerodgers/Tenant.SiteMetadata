@@ -62,7 +62,7 @@ function Import-SiteCollectionAdministrator
             $batchExecutionJob = $batchRequests | ForEach-Object -ThrottleLimit $ThrottleLimit -Parallel ${function:Invoke-SharePointTenantSiteAdministratorRequest} -AsJob
 
             # save the batch results as they are returned
-            Save-SharePointTenantSiteAdministratorBatchResult -BatchRequest $batchRequests -BatchResponse $siteAdministratorsBatchResponses -BatchExecutionJob $batchExecutionJob
+            Save-SharePointTenantSiteAdministratorBatchResult -BatchRequest $batchRequests -BatchResponse $siteAdministratorsBatchResponses -BatchExecutionJob $batchExecutionJob -ErrorVariable "sqlexceptions"
             
             Write-PSFMessage -Message "Site Administrator import completed" -Level Verbose
 
@@ -71,6 +71,13 @@ function Import-SiteCollectionAdministrator
             {
                 Write-PSFMessage "Batch execution error, BatchId: $($siteAdministratorsBatchError.Key), Error: $($siteAdministratorsBatchError.Value)" -Level Critical
             }
+
+            # log any sql execution errors
+            foreach( $sqlexception in $sqlexceptions )
+            {
+                Write-PSFMessage "SQL update failed." -ErrorRecord $sqlexception -Level Error
+            }
+
         }
         catch
         {
