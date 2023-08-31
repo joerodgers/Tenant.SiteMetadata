@@ -72,7 +72,7 @@ function Invoke-SharePointTenantSiteAdministratorRequest
             }
             catch
             {
-                if( $attempts -le $MaxRetryAttempts )
+                if( $attempts -le 10 )
                 {
                     Start-Sleep -Seconds ($attempts * 60)
 
