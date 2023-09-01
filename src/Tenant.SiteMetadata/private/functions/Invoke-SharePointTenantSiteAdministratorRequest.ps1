@@ -35,6 +35,8 @@ function Invoke-SharePointTenantSiteAdministratorRequest
         }
         catch
         {
+            $pnpex = Get-PnPException | Format-List * -Force | Out-String
+
             $ex = [PSCustomObject] @{
                 Timestamp    = Get-Date
                 Message      = "Failed to connect to tenant for batch request."
@@ -42,8 +44,8 @@ function Invoke-SharePointTenantSiteAdministratorRequest
                 ErrorRecord  = $_.ToString()
                 Exception    = $_.Exception.ToString()
                 BatchId      = $batchRequest.BatchId
-                BatchBoday   = $batchRequest.BatchBody
-                PnPException = (Get-PnPException) 
+                BatchBody    = $batchRequest.BatchBody
+                PnPException = $pnpex
             }
             
             $batchErrors.TryAdd( $batchRequest.BatchId, ($ex | ConvertTo-Json -Compress) )
@@ -74,7 +76,7 @@ function Invoke-SharePointTenantSiteAdministratorRequest
             {
                 if( $attempts -le 10 )
                 {
-                    Start-Sleep -Seconds ($attempts * 60)
+                    Start-Sleep -Seconds 60
 
                     $attempts++
 
@@ -90,7 +92,7 @@ function Invoke-SharePointTenantSiteAdministratorRequest
                     ErrorRecord  = $_.ToString()
                     Exception    = $_.Exception.ToString()
                     BatchId      = $batchRequest.BatchId
-                    BatchBoday   = $batchRequest.BatchBody
+                    BatchBody    = $batchRequest.BatchBody
                     PnPException = $pnpex
                 }
 

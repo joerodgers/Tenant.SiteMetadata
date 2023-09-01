@@ -42,7 +42,7 @@ function Invoke-SharePointTenantSiteDetailBatchRequest
                 ErrorRecord  = $_.ToString()
                 Exception    = $_.Exception.ToString()
                 BatchId      = $batchRequest.BatchId
-                BatchBoday   = $batchRequest.BatchBody
+                BatchBody    = $batchRequest.BatchBody
                 PnPException = (Get-PnPException) 
             }
             
@@ -74,7 +74,7 @@ function Invoke-SharePointTenantSiteDetailBatchRequest
             {
                 if( $attempts -le 10 )
                 {
-                    Start-Sleep -Seconds ($attempts * 60)
+                    Start-Sleep -Seconds 60
 
                     $attempts++
 
@@ -90,7 +90,7 @@ function Invoke-SharePointTenantSiteDetailBatchRequest
                     ErrorRecord  = $_.ToString()
                     Exception    = $_.Exception.ToString()
                     BatchId      = $batchRequest.BatchId
-                    BatchBoday   = $batchRequest.BatchBody
+                    BatchBody    = $batchRequest.BatchBody
                     PnPException = $pnpex
                 }
 
