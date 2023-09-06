@@ -8,20 +8,26 @@
     begin
     {
         $context = Get-PnPContext
+
+        if( -not (Get-Variable -Name "GeoLocationCache" -Scope Script -ErrorAction Ignore ) )
+        {
+            Set-Variable -Name "GeoLocationCache" -Value @{} -Scope Script -ErrorAction Stop
+        } 
     }
     process
     {
-        $response = Invoke-PnPSPRestMethod -Method "Get" -Url "/_api/TenantInformationCollection"
-
-        foreach( $geo in $response.value )
+        if( -not $script:GeoLocationCache.ContainsKey( $context.Url ))
         {
-            if(  $context.Url -eq $geo.TenantAdminDomain )
+            $response = Invoke-PnPSPRestMethod -Method "Get" -Url "/_api/TenantInformationCollection"
+
+            foreach( $geo in $response.value )
             {
-                return $geo.GeoLocation
+                $script:GeoLocationCache[ $geo.TenantAdminDomain ] = $geo.GeoLocation
             }
+    
         }
 
-        return $null
+        return $script:GeoLocationCache[ $context.Url ]
     }
     end
     {

@@ -17,13 +17,16 @@
     }
     process
     {
+        Write-PSFMessage -Message "Total Batch Jobs: $($BatchExecutionJob.ChildJobs.Count)" -Level Verbose
+
         while( $BatchExecutionJob.State -eq 'Running' -or -not $BatchResponse.IsEmpty )
         {
-            Write-PSFMessage -Message "Batch Job Information: JobId=$($BatchExecutionJob.Id), State=$($BatchExecutionJob.State)" -Level Verbose
+            $status = $BatchExecutionJob.ChildJobs | Group-Object -Property State | ForEach-Object { "{0}={1}" -f $_.Name, $_.Count } 
+
+            Write-PSFMessage -Message "Batch Job Progress: $($status -join ' | ')" -Level Verbose
 
             if( $BatchResponse.IsEmpty )
             {
-                Write-PSFMessage -Message "Waiting for more batches to complete" -Level Verbose
                 Start-Sleep -Seconds 1
                 continue
             }
@@ -34,19 +37,17 @@
 
                 $batchId = $BatchResponse.Keys | Select-Object -First 1
 
-                Write-PSFMessage -Message "Removing batch '$batchId'" -Level Verbose
-
                 if( -not $BatchResponse.TryRemove( $batchId, [ref] $rawResponse ) )
                 {
                     Write-PSFMessage -Message "Failed to remove $batchId from batch responses" -Level Error
                     continue
                 }
 
-                # convert the raw batch response text into a DetailedTenantSiteModel List
-                $detailedTenantSiteModelList = ConvertTo-DetailedTenantSiteModelList -BatchResponse $rawResponse
-
                 try
                 {
+                    # convert the raw batch response text into a DetailedTenantSiteModel List
+                    $detailedTenantSiteModelList = ConvertTo-DetailedTenantSiteModelList -BatchResponse $rawResponse
+
                     Save-TenantSiteModel -TenantSiteModelList $detailedTenantSiteModelList -BatchSize ($detailedTenantSiteModelList.Count) -ErrorVariable "sqlexceptions" -ErrorAction Stop
                 }
                 catch

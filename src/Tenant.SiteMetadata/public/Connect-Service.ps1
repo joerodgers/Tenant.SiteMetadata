@@ -14,6 +14,14 @@ function Connect-Service
         $TenantConnectionInformation
     )
 
+    $module = Get-Module -Name "PnP.Powershell" -ErrorAction Stop
+    
+    Write-PSFMessage -Message "Loaded PnP.Powershell module version: $($module.Version)" -Level Verbose
+
+    $module = Get-Module -Name "Tenant.SiteMetadata" -ErrorAction Stop
+    
+    Write-PSFMessage -Message "Loaded Tenant.SiteMetadata module version: $($module.Version)" -Level Verbose
+
     Write-HttpsProxyServerConfigurationWarning
 
     Register-DatabaseConnectionInformation -DatabaseConnectionInformation $DatabaseConnectionInformation
