@@ -38,24 +38,10 @@ function New-AzureSqlAccessToken
         }
         else 
         {
-            # this version leverages an in memory token cache.  cache automatically handles token expiration
-
             if( -not ($confidentialClientApplication = Get-ConfidentialClientApplication) )
             {
                 $confidentialClientApplication = [Microsoft.Identity.Client.ConfidentialClientApplicationBuilder]::Create($ClientId).WithCertificate($certificate).WithTenantId($TenantId).Build()
-                
-                # https://learn.microsoft.com/en-us/azure/active-directory/develop/msal-net-token-cache-serialization?tabs=aspnet
-                
-                # TO DO: TEST THESE ALTERNATIVES
-                #$confidentialClientApplication = [Microsoft.Identity.Client.ConfidentialClientApplicationBuilder]::Create($ClientId).WithCertificate($certificate).WithLegacyCacheCompatibility($false).WithTenantId($TenantId).Build()
-                #$confidentialClientApplication = [Microsoft.Identity.Client.ConfidentialClientApplicationBuilder]::Create($ClientId).WithCertificate($certificate).WithLegacyCacheCompatibility($false).WithCacheOptions(([Microsoft.Identity.Client.CacheOptions]::EnableSharedCacheOptions).[]WithTenantId($TenantId).Build()
-
-                # if this ever gets removed, it's safe to remove the following from the RequiredAssembly section the .psd1 
-                #   - Microsoft.Identity.*.dll 
-                #   - Microsoft.Extensions.*.dll
-                #   - Microsoft.AspNetCore.DataProtection.Abstractions.dll
-                $confidentialClientApplication = [Microsoft.Identity.Web.TokenCacheExtensions]::AddInMemoryTokenCache($confidentialClientApplication)
-
+               
                 Register-ConfidentialClientApplication -ConfidentialClientApplication $confidentialClientApplication
             }
 
